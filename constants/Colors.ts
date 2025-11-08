@@ -1,4 +1,4 @@
-const tintColorLight = '#008221ff'; // UNIBEN Purple
+const tintColorLight = '#680082ff'; // UNIBEN Purple
 const tintColorDark = '#FFD700';  // UNIBEN Gold
 
 export default {

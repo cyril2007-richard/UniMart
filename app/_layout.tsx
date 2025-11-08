@@ -1,3 +1,4 @@
+import { useColorScheme } from '@/components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -6,8 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider } from '../contexts/AuthContext';
-
-import { useColorScheme } from '@/components/useColorScheme';
+import { ListingsProvider } from '../contexts/ListingsContext';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -15,7 +15,7 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
+  // Ensure that reloading on /modal keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
@@ -45,22 +45,60 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-  <RootLayoutNav />
-  </AuthProvider>
-  )
+      <ListingsProvider>
+        <RootLayoutNav />
+      </ListingsProvider>
+    </AuthProvider>
+  );
 }
 
+
+
 function RootLayoutNav() {
+
   const colorScheme = useColorScheme();
 
+
+
   return (
+
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+
       <Stack>
+
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+
+        <Stack.Screen name="announcement" options={{ headerShown: false }} />
+
         <Stack.Screen name="login" options={{ headerShown: false }} />
+
         <Stack.Screen name="signup" options={{ headerShown: false }} />
+
+        <Stack.Screen name="cart" options={{ headerShown: false }} />
+
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+
+        <Stack.Screen name="apply" options={{ headerShown: false }} />
+
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+
+        <Stack.Screen name="how-to-buy" options={{ presentation: 'modal', headerShown: false }} />
+
+        <Stack.Screen name="how-to-sell" options={{ presentation: 'modal', headerShown: false }} />
+
+        <Stack.Screen name="support" options={{ presentation: 'modal', headerShown: false }} />
+
+        <Stack.Screen name="new-chat" options={{ presentation: 'modal', headerShown: false }} />
+
+        <Stack.Screen name="product-screen" options={{ headerShown: false }} />
+
+        <Stack.Screen name="seller-profile" options={{ headerShown: false }} />
+        <Stack.Screen name="product-detail" options={{ headerShown: false }} />
+
       </Stack>
+
     </ThemeProvider>
+
   );
+
 }

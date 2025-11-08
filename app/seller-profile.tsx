@@ -1,79 +1,68 @@
 
-import { MoreHorizontal, Settings, Grid, List } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Grid, List } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, FlatList, Dimensions, useColorScheme } from 'react-native';
-import Colors from '../../constants/Colors';
-import { useAuth } from '../../contexts/AuthContext';
-import { useListings } from '../../contexts/ListingsContext';
-import { useRouter } from 'expo-router';
+import Colors from '../constants/Colors';
+import { users, products } from '../constants/mockData';
 
 const { width } = Dimensions.get('window');
 const imageSize = (width - 40) / 3; // (padding - gaps) / numColumns
 
-export default function ProfileScreen() {
+export default function SellerProfileScreen() {
+  const { id } = useLocalSearchParams();
+  const seller = users.find(u => u.id === id);
+  const sellerProducts = products.filter(p => p.sellerId === id);
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
   const [activeTab, setActiveTab] = useState('grid');
-  const { currentUser } = useAuth();
-  const { listings } = useListings();
   const router = useRouter();
 
-  if (!currentUser) {
+  if (!seller) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <Text style={{ fontSize: 16, color: theme.text }}>No user logged in.</Text>
+        <Text style={{ fontSize: 16, color: theme.text }}>Seller not found.</Text>
       </View>
     );
   }
 
-  const userListings = listings.filter(listing => listing.userId === currentUser.id);
-
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.username, { color: theme.text }]}>{currentUser.username}</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/settings')}>
-            <Settings color={theme.text} size={24} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <MoreHorizontal color={theme.text} size={24} />
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.username, { color: theme.text }]}>{seller.username}</Text>
       </View>
 
       <View style={styles.profileSection}>
         <Image
-          source={{ uri: currentUser.profilePicture }}
+          source={{ uri: seller.profilePicture }}
           style={styles.profilePicture}
         />
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>{userListings.length}</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{sellerProducts.length}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Listings</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>324</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{seller.followers}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Followers</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>180</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{seller.following}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Following</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.bioSection}>
-        <Text style={[styles.name, { color: theme.text }]}>{currentUser.name}</Text>
-        <Text style={[styles.bioText, { color: theme.tabIconDefault }]}>{currentUser.matricNumber}</Text>
+        <Text style={[styles.name, { color: theme.text }]}>{seller.name}</Text>
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.primaryButton, { backgroundColor: theme.purple }]}>
-          <Text style={[styles.primaryButtonText, { color: theme.white }]}>Edit Profile</Text>
+          <Text style={[styles.primaryButtonText, { color: theme.white }]}>Follow</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryButton, { borderColor: theme.purple }]}>
-          <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Share Profile</Text>
+          <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Message</Text>
         </TouchableOpacity>
       </View>
 
@@ -88,12 +77,12 @@ export default function ProfileScreen() {
 
       {activeTab === 'grid' ? (
         <FlatList
-          data={userListings}
+          data={sellerProducts}
           numColumns={3}
           scrollEnabled={false}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.listingItem}>
-              <Image source={{ uri: item.images[0] }} style={styles.listingImage} />
+            <TouchableOpacity style={styles.listingItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
+              <Image source={{ uri: item.image }} style={styles.listingImage} />
             </TouchableOpacity>
           )}
           keyExtractor={(item) => item.id}
@@ -108,7 +97,6 @@ export default function ProfileScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -122,20 +110,13 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 50,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   username: {
     fontSize: 22,
     fontWeight: 'bold',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  iconButton: {
-    padding: 5,
   },
   profileSection: {
     flexDirection: 'row',
@@ -169,10 +150,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  bioText: {
-    fontSize: 14,
-    marginTop: 5,
   },
   buttonContainer: {
     flexDirection: 'row',

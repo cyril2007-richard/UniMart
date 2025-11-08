@@ -12,10 +12,12 @@ import {
 } from "react-native";
 import Colors from "../../constants/Colors";
 import mockData from "../../constants/mockData";
+import { useRouter } from "expo-router";
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors.light;
+  const router = useRouter();
 
   const [selectedCategory, setSelectedCategory] = useState(mockData[0].id);
   const [isFocused, setIsFocused] = useState(false);
@@ -53,7 +55,7 @@ export default function ShopScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.bellIcon}>
+        <TouchableOpacity style={styles.bellIcon} onPress={() => router.push('/announcement')}>
           <Ionicons name="notifications-outline" size={24} color={theme.tint} />
         </TouchableOpacity>
       </View>
@@ -114,7 +116,9 @@ export default function ShopScreen() {
             numColumns={3}
             columnWrapperStyle={{ justifyContent: "space-between" }}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.subcategoryCard}>
+              <TouchableOpacity 
+                style={styles.subcategoryCard}
+                onPress={() => router.push(`/product-screen?categoryId=${selectedCategory}&subcategory=${encodeURIComponent(item)}`)}>
                 <View style={styles.placeholderBox} />
                 <Text style={[styles.subcategoryText, { color: theme.text }]}>{item}</Text>
               </TouchableOpacity>

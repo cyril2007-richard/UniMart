@@ -1,12 +1,28 @@
-import { Entypo, Ionicons } from "@expo/vector-icons";
+
+import { Ionicons } from "@expo/vector-icons";
+import { Headset } from 'lucide-react-native';
 import { useRouter } from "expo-router";
-import React from "react";
-import { FlatList, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { FlatList, Image, Text, TextInput, TouchableOpacity, View, Alert } from "react-native";
 import Colors from "../../constants/Colors";
 import { chats } from "../../constants/mockData";
 
 export default function ChatScreen() {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredChats, setFilteredChats] = useState(chats);
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text) {
+      const filtered = chats.filter((chat) =>
+        chat.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredChats(filtered);
+    } else {
+      setFilteredChats(chats);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.light.background, paddingHorizontal: 10 }}>
@@ -21,10 +37,14 @@ export default function ChatScreen() {
           paddingHorizontal: 10,
         }}
       >
-        <Entypo name="dots-three-horizontal" size={20} color={Colors.light.text} />
+        <TouchableOpacity onPress={() => router.push('/support')}>
+          <Headset size={20} color={Colors.light.text} />
+        </TouchableOpacity>
         <View style={{ flexDirection: "row", gap: 15 }}>
           <Ionicons name="camera-outline" size={22} color={Colors.light.text} />
-          <Ionicons name="add" size={26} color={Colors.light.text} />
+          <TouchableOpacity onPress={() => router.push('/new-chat')}>
+            <Ionicons name="add" size={26} color={Colors.light.text} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -52,12 +72,14 @@ export default function ChatScreen() {
           placeholder="Search"
           placeholderTextColor="#888"
           style={{ flex: 1, marginLeft: 6, color: Colors.light.text }}
+          value={searchQuery}
+          onChangeText={handleSearch}
         />
       </View>
 
       {/* Chats */}
       <FlatList
-        data={chats}
+        data={filteredChats}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -87,3 +109,4 @@ export default function ChatScreen() {
     </View>
   );
 }
+

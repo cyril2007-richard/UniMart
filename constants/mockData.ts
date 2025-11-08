@@ -240,9 +240,22 @@ const mockData: Category[] = [
   },
 ];
 
-export const chats = [
+export interface Chat {
+  id: string;
+  sellerId: string;
+  userId: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  lastSeen: string;
+  messages: { id: number; sender: string; text: string; time: string; }[];
+}
+
+export const chats: Chat[] = [
   {
     id: "1",
+    sellerId: "2",
+    userId: "1",
     name: "Amaka Johnson",
     avatar: "https://randomuser.me/api/portraits/women/44.jpg",
     lastMessage: "Omo I can’t believe that lecture today 😭",
@@ -262,6 +275,8 @@ export const chats = [
   },
   {
     id: "2",
+    sellerId: "1",
+    userId: "2",
     name: "Tunde Okafor",
     avatar: "https://randomuser.me/api/portraits/men/31.jpg",
     lastMessage: "Send me that note abeg 😭",
@@ -282,7 +297,23 @@ export const chats = [
 
 ];
 
-export const users = [
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+  profilePicture: string;
+  matricNumber: string;
+  faculty: string;
+  followers: number;
+  following: number;
+  rating: number;
+  totalReviews: number;
+  productsCount: number;
+}
+
+export const users: User[] = [
   {
     id: "1",
     name: "Enegbuma Richard Oseiwe",
@@ -294,6 +325,9 @@ export const users = [
     faculty: "Engineering",
     followers: 120,
     following: 75,
+    rating: 4.5,
+    totalReviews: 23,
+    productsCount: 12,
   },
   {
     id: "2",
@@ -306,10 +340,148 @@ export const users = [
     faculty: "Engineering",
     followers: 1209,
     following: 7,
+    rating: 4.8,
+    totalReviews: 124,
+    productsCount: 45,
   }
 ];
 
 
+export interface Review {
+  id: number;
+  name: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
 
+export const reviews: Review[] = [
+  { id: 1, name: "Sarah M.", rating: 5, comment: "Great product! Fast delivery", date: "2 days ago" },
+  { id: 2, name: "Mike T.", rating: 4, comment: "Good quality for the price", date: "1 week ago" },
+  { id: 3, name: "Emma K.", rating: 5, comment: "Exactly as described", date: "2 weeks ago" },
+];
+
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  image: string;
+  category: string;
+  subcategory: string;
+  sellerId: string;
+}
+
+export const products: Product[] = [
+  // Groceries
+  {
+    id: "1",
+    name: "Mama Gold Rice (5kg)",
+    price: 8500,
+    description: "High-quality Nigerian rice, perfect for jollof and other dishes.",
+    image: "https://via.placeholder.com/150",
+    category: "groceries",
+    subcategory: "Rice & Grains",
+    sellerId: "1",
+  },
+  {
+    id: "2",
+    name: "Indomie Instant Noodles (Carton)",
+    price: 4500,
+    description: "A carton of delicious and easy-to-cook Indomie noodles.",
+    image: "https://via.placeholder.com/150",
+    category: "groceries",
+    subcategory: "Pasta & Noodles",
+    sellerId: "1",
+  },
+  // Tech & Gadgets
+  {
+    id: "3",
+    name: "Oraimo Power Bank (20000mAh)",
+    price: 15000,
+    description: "A reliable power bank to keep your devices charged on the go.",
+    image: "https://via.placeholder.com/150",
+    category: "tech_gadgets",
+    subcategory: "Power Banks",
+    sellerId: "2",
+  },
+  {
+    id: "4",
+    name: "itel Earbuds",
+    price: 8000,
+    description: "Affordable and quality earbuds for music and calls.",
+    image: "https://via.placeholder.com/150",
+    category: "tech_gadgets",
+    subcategory: "Earphones & Headsets",
+    sellerId: "2",
+  },
+  // Hostel Essentials
+  {
+    id: "5",
+    name: "Mouka Foam Mattress (Student Size)",
+    price: 25000,
+    description: "A comfortable and durable mattress, perfect for hostel rooms.",
+    image: "https://via.placeholder.com/150",
+    category: "hostel_essentials",
+    subcategory: "Bed Frames",
+    sellerId: "1",
+  },
+  {
+    id: "6",
+    name: "Rechargeable Fan",
+    price: 12000,
+    description: "A portable and rechargeable fan to keep you cool during power outages.",
+    image: "https://via.placeholder.com/150",
+    category: "hostel_essentials",
+    subcategory: "Fans",
+    sellerId: "2",
+  },
+  // Campus Fashion
+  {
+    id: "7",
+    name: "UNIBEN Hoodie",
+    price: 10000,
+    description: "A stylish hoodie to show your school pride.",
+    image: "https://via.placeholder.com/150",
+    category: "campus_fashion",
+    subcategory: "UNIBEN Merch",
+    sellerId: "1",
+  },
+  {
+    id: "8",
+    name: "Nike Slides",
+    price: 15000,
+    description: "Comfortable and trendy slides for casual wear.",
+    image: "https://via.placeholder.com/150",
+    category: "campus_fashion",
+    subcategory: "Sneakers",
+    sellerId: "2",
+  },
+  // Study Supplies
+  {
+    id: "9",
+    name: "Engineering Drawing Board",
+    price: 7000,
+    description: "A1 size drawing board for engineering students.",
+    image: "https://via.placeholder.com/150",
+    category: "study_supplies",
+    subcategory: "Lab Equipment",
+    sellerId: "1",
+  },
+  {
+    id: "10",
+    name: "GST Past Questions",
+    price: 1500,
+    description: "A compilation of past questions for General Studies courses.",
+    image: "https://via.placeholder.com/150",
+    category: "study_supplies",
+    subcategory: "Past Questions",
+    sellerId: "2",
+  },
+];
 
 export default mockData;
+
+
+
