@@ -2,7 +2,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Grid, List } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, FlatList, Dimensions, useColorScheme } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, FlatList, Dimensions } from 'react-native';
 import Colors from '../constants/Colors';
 import { users, products } from '../constants/mockData';
 
@@ -13,8 +13,7 @@ export default function SellerProfileScreen() {
   const { id } = useLocalSearchParams();
   const seller = users.find(u => u.id === id);
   const sellerProducts = products.filter(p => p.sellerId === id);
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const theme = Colors.light;
   const [activeTab, setActiveTab] = useState('grid');
   const router = useRouter();
 
@@ -89,9 +88,19 @@ export default function SellerProfileScreen() {
           columnWrapperStyle={styles.listingRow}
         />
       ) : (
-        <View style={styles.listViewContainer}>
-          <Text style={{color: theme.text}}>List view not implemented yet.</Text>
-        </View>
+        <FlatList
+          data={sellerProducts}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.listItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
+              <Image source={{ uri: item.image }} style={styles.listImage} />
+              <View style={styles.listItemDetails}>
+                <Text style={styles.listItemTitle}>{item.name}</Text>
+                <Text style={styles.listItemPrice}>₦{item.price}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item.id}
+        />
       )}
     </ScrollView>
   );
@@ -204,6 +213,37 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 10,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  listImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  listItemDetails: {
+    flex: 1,
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  listItemPrice: {
+    fontSize: 14,
+    color: Colors.light.purple,
+    marginTop: 5,
   },
   listViewContainer: {
     alignItems: 'center',

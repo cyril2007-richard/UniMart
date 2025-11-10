@@ -1,5 +1,6 @@
 // src/screens/ShopScreen.tsx
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   FlatList,
@@ -12,7 +13,6 @@ import {
 } from "react-native";
 import Colors from "../../constants/Colors";
 import mockData from "../../constants/mockData";
-import { useRouter } from "expo-router";
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();

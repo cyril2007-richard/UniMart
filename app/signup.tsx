@@ -1,21 +1,20 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Colors from '../constants/Colors';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SignupScreen() {
-  const [step, setStep] = useState(1); // 1: Details, 2: OTP Verification
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -31,8 +30,11 @@ export default function SignupScreen() {
 
   const FAKE_OTP = '123456';
 
+  const updateFormData = (key: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleContinue = () => {
-    // Validate all fields
     if (
       !formData.email ||
       !formData.name ||
@@ -46,14 +48,12 @@ export default function SignupScreen() {
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
-    // Check if email is allowed domain
     const allowedDomains = ['gmail.com', 'uniben.edu', 'eng.uniben.com'];
     const emailDomain = formData.email.split('@')[1];
     if (!allowedDomains.includes(emailDomain)) {
@@ -61,19 +61,16 @@ export default function SignupScreen() {
       return;
     }
 
-    // Validate password length
     if (formData.password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 
-    // Validate phone number
     if (formData.phoneNumber.length < 10) {
       Alert.alert('Error', 'Please enter a valid phone number');
       return;
     }
 
-    // Move to OTP verification
     setStep(2);
   };
 
@@ -97,58 +94,6 @@ export default function SignupScreen() {
     }
   };
 
-  const updateFormData = (key: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  if (step === 2) {
-    return (
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>UniMarket</Text>
-          </View>
-
-          <Text style={styles.otpTitle}>Enter verification code</Text>
-          <Text style={styles.otpSubtitle}>
-            We sent a code to {formData.phoneNumber}
-          </Text>
-          <Text style={styles.otpHint}>
-            Hint: Use 123456
-          </Text>
-
-          <TextInput
-            style={styles.otpInput}
-            placeholder="Enter 6-digit code"
-            placeholderTextColor="#999"
-            value={otp}
-            onChangeText={setOtp}
-            keyboardType="number-pad"
-            maxLength={6}
-            textAlign="center"
-          />
-
-          <TouchableOpacity style={styles.signupButton} onPress={handleVerifyOTP}>
-            <Text style={styles.signupButtonText}>Verify</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setStep(1)}
-          >
-            <Text style={styles.backButtonText}>Back to sign up</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    );
-  }
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -157,197 +102,229 @@ export default function SignupScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>UniMarket</Text>
+        {/* === NOSTALGIC HEADER === */}
+        <View style={styles.header}>
+          <Text style={styles.logo}>UniMarket</Text>
+          <Text style={styles.tagline}>Shop Smart. Sell Fast.</Text>
         </View>
 
-        <Text style={styles.subtitle}>
-          Sign up to buy and sell on campus
-        </Text>
+        {step === 1 ? (
+          <View style={styles.form}>
+            <Text style={styles.title}>Create your account</Text>
 
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#999"
-            value={formData.email}
-            onChangeText={(text) => updateFormData('email', text)}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
+            {[
+              { placeholder: 'Email', key: 'email', keyboard: 'email-address' },
+              { placeholder: 'Full Name', key: 'name' },
+              { placeholder: 'Username', key: 'username' },
+              { placeholder: 'Password', key: 'password', secure: true },
+              { placeholder: 'Matric Number', key: 'matricNumber' },
+              { placeholder: 'Faculty', key: 'faculty' },
+              { placeholder: 'Phone Number', key: 'phoneNumber', keyboard: 'phone-pad' },
+            ].map((field) => (
+              <View key={field.key} style={styles.field}>
+                <Text style={styles.label}>{field.placeholder}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={(formData as any)[field.key]}
+                  onChangeText={(text) => updateFormData(field.key, text)}
+                  keyboardType='default'
+                  secureTextEntry={field.secure || false}
+                  autoCapitalize="none"
+                />
+              </View>
+            ))}
 
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            placeholderTextColor="#999"
-            value={formData.name}
-            onChangeText={(text) => updateFormData('name', text)}
-          />
+            <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
+              <Text style={styles.continueText}>Continue</Text>
+            </TouchableOpacity>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            placeholderTextColor="#999"
-            value={formData.username}
-            onChangeText={(text) => updateFormData('username', text)}
-            autoCapitalize="none"
-          />
+            <View style={styles.loginLink}>
+              <Text style={styles.loginText}>Already have an account?</Text>
+              <TouchableOpacity onPress={() => router.push('/login')}>
+                <Text style={styles.loginLinkText}> Log in</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.form}>
+            <Text style={styles.title}>Verify your number</Text>
+            <Text style={styles.subtitle}>
+              We sent a 6-digit code to:
+            </Text>
+            <Text style={styles.phone}>{formData.phoneNumber}</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#999"
-            value={formData.password}
-            onChangeText={(text) => updateFormData('password', text)}
-            secureTextEntry
-            autoCapitalize="none"
-          />
+            <TextInput
+              style={styles.otpInput}
+              placeholder="Enter 6-digit code"
+              value={otp}
+              onChangeText={setOtp}
+              keyboardType="number-pad"
+              maxLength={6}
+              textAlign="center"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Matric Number"
-            placeholderTextColor="#999"
-            value={formData.matricNumber}
-            onChangeText={(text) => updateFormData('matricNumber', text)}
-            autoCapitalize="characters"
-          />
+            <TouchableOpacity style={styles.verifyBtn} onPress={handleVerifyOTP}>
+              <Text style={styles.verifyText}>Verify & Continue</Text>
+            </TouchableOpacity>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Faculty"
-            placeholderTextColor="#999"
-            value={formData.faculty}
-            onChangeText={(text) => updateFormData('faculty', text)}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            placeholderTextColor="#999"
-            value={formData.phoneNumber}
-            onChangeText={(text) => updateFormData('phoneNumber', text)}
-            keyboardType="phone-pad"
-          />
-
-          <TouchableOpacity style={styles.signupButton} onPress={handleContinue}>
-            <Text style={styles.signupButtonText}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text style={styles.loginLink}>Log in</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity onPress={() => setStep(1)}>
+              <Text style={styles.backLink}>Back to Signup</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
+// ===========================================
+// NOSTALGIC 2000s STYLES
+// ===========================================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 20,
+    paddingHorizontal: 32,
+    paddingVertical: 40,
   },
-  logoContainer: {
+
+  // Header
+  header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 40,
   },
-  logoText: {
-    fontSize: 42,
+  logo: {
+    fontSize: 36,
     fontWeight: 'bold',
-    color: Colors.light.purple,
+    color: '#004080',
+    letterSpacing: 1,
+    fontFamily: 'Courier New',
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+
+  // Form
+  form: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderWidth: 2,
+    borderColor: '#ccc',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#004080',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   subtitle: {
     textAlign: 'center',
-    color: '#8E8E8E',
-    fontSize: 16,
-    marginBottom: 30,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
   },
-  formContainer: {
-    width: '100%',
+  phone: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#004080',
+    marginBottom: 20,
+  },
+
+  // Input Fields
+  field: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 6,
+    fontWeight: '600',
   },
   input: {
-    backgroundColor: '#FAFAFA',
     borderWidth: 1,
-    borderColor: '#DBDBDB',
-    borderRadius: 5,
-    padding: 15,
-    marginBottom: 12,
-    fontSize: 14,
+    borderColor: '#999',
+    backgroundColor: '#fff',
+    padding: 12,
+    fontSize: 15,
+    fontFamily: 'Arial',
   },
-  signupButton: {
-    backgroundColor: Colors.light.purple,
-    borderRadius: 5,
-    padding: 15,
+
+  // Continue Button
+  continueBtn: {
+    backgroundColor: '#004080',
+    padding: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
+    marginBottom: 20,
   },
-  signupButtonText: {
+  continueText: {
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 1,
   },
-  loginContainer: {
+
+  // Login Link
+  loginLink: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 30,
+    marginTop: 10,
   },
   loginText: {
-    color: '#8E8E8E',
     fontSize: 14,
+    color: '#666',
   },
-  loginLink: {
-    color: Colors.light.purple,
-    fontWeight: '600',
+  loginLinkText: {
     fontSize: 14,
-  },
-  otpTitle: {
-    fontSize: 24,
+    color: '#004080',
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
+    textDecorationLine: 'underline',
   },
-  otpSubtitle: {
-    textAlign: 'center',
-    color: '#8E8E8E',
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  otpHint: {
-    textAlign: 'center',
-    color: Colors.light.purple,
-    fontSize: 12,
-    marginBottom: 20,
-    fontStyle: 'italic',
-  },
+
+  // OTP Input
   otpInput: {
-    backgroundColor: '#FAFAFA',
     borderWidth: 1,
-    borderColor: '#DBDBDB',
-    borderRadius: 5,
-    padding: 20,
+    borderColor: '#999',
+    backgroundColor: '#fff',
+    padding: 16,
     marginBottom: 20,
-    fontSize: 24,
-    letterSpacing: 10,
+    fontSize: 22,
+    letterSpacing: 8,
     fontWeight: 'bold',
+    textAlign: 'center',
+    fontFamily: 'Courier New',
   },
-  backButton: {
+
+  // Verify Button
+  verifyBtn: {
+    backgroundColor: '#004080',
+    padding: 14,
     alignItems: 'center',
-    marginTop: 20,
+    marginBottom: 20,
   },
-  backButtonText: {
-    color: Colors.light.purple,
+  verifyText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+
+  // Back Link
+  backLink: {
+    color: '#004080',
+    textAlign: 'center',
     fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });

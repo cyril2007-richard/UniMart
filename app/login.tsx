@@ -1,21 +1,18 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Colors from '../constants/Colors';
 import { useAuth } from '../contexts/AuthContext';
-
-
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -39,7 +36,7 @@ export default function LoginScreen() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#f0f0f0" />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -49,71 +46,63 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
+          {/* === NOSTALGIC LOGO === */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoIcon}> </Text>
-            </View>
             <Text style={styles.logoText}>UniMarket</Text>
-            <Text style={styles.subtitle}>Your campus marketplace</Text>
+            <Text style={styles.tagline}>Your campus marketplace since 2025</Text>
           </View>
 
-          {/* Login Form */}
-          <View style={styles.formContainer}>
-            <Text style={styles.welcomeText}>Welcome back</Text>
-            
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Username"
-                placeholderTextColor="#A0A0A0"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
-            </View>
+          {/* === LOGIN FORM === */}
+          <View style={styles.form}>
+            <Text style={styles.welcome}>Welcome back!</Text>
 
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#A0A0A0"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
 
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+
+            <TouchableOpacity style={styles.forgot}>
+              <Text style={styles.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>Sign In</Text>
+            {/* === CLASSIC SIGN IN BUTTON === */}
+            <TouchableOpacity style={styles.signInBtn} onPress={handleLogin}>
+              <Text style={styles.signInText}>Sign In</Text>
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>or continue with</Text>
-              <View style={styles.divider} />
+            {/* === DIVIDER === */}
+            <View style={styles.divider}>
+              <View style={styles.line} />
+              <Text style={styles.or}>or continue with</Text>
+              <View style={styles.line} />
             </View>
 
-            {/* Google Sign In */}
-            <TouchableOpacity style={styles.googleButton}>
-              <View style={styles.googleIconContainer}>
-                <Text style={styles.googleIcon}>G</Text>
-              </View>
-              <Text style={styles.googleButtonText}>Sign in with Google</Text>
+            {/* === RETRO GOOGLE BUTTON === */}
+            <TouchableOpacity style={styles.googleBtn}>
+              <Text style={styles.googleG}>G</Text>
+              <Text style={styles.googleText}>Sign in with Google</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Sign Up Link */}
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don't have an account? </Text>
+          {/* === SIGN UP LINK === */}
+          <View style={styles.signup}>
+            <Text style={styles.signupText}>New here? </Text>
             <TouchableOpacity onPress={() => router.push('/signup')}>
-              <Text style={styles.signupLink}>Sign up</Text>
+              <Text style={styles.signupLink}>Create an account</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -122,166 +111,148 @@ export default function LoginScreen() {
   );
 }
 
+// ===========================================
+// NOSTALGIC 2000s STYLES
+// ===========================================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#f0f0f0',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
     paddingVertical: 40,
   },
+
+  // Logo
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 48,
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.light.purple,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: Colors.light.purple,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  logoIcon: {
-    fontSize: 40,
+    marginBottom: 40,
   },
   logoText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    letterSpacing: -0.5,
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#004080',
+    letterSpacing: 1,
+    fontFamily: 'Courier New',
   },
-  subtitle: {
-    fontSize: 15,
+  tagline: {
+    fontSize: 14,
     color: '#666',
-    marginTop: 4,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
-  formContainer: {
-    width: '100%',
+
+  // Form
+  form: {
     backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: '#ccc',
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 24,
+  welcome: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#004080',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  inputContainer: {
-    marginBottom: 16,
+
+  label: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 6,
+    fontWeight: '600',
   },
   input: {
-    backgroundColor: '#F8F8F8',
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    borderRadius: 12,
-    padding: 16,
+    borderWidth: 1,
+    borderColor: '#999',
+    backgroundColor: '#fff',
+    padding: 12,
     fontSize: 15,
-    color: '#1A1A1A',
+    marginBottom: 16,
+    fontFamily: 'Arial',
   },
-  forgotPassword: {
+
+  forgot: {
     alignSelf: 'flex-end',
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  forgotPasswordText: {
-    color: Colors.light.purple,
-    fontSize: 14,
-    fontWeight: '600',
+  forgotText: {
+    color: '#004080',
+    fontSize: 13,
+    textDecorationLine: 'underline',
   },
-  loginButton: {
-    backgroundColor: Colors.light.purple,
-    borderRadius: 12,
-    padding: 18,
+
+  // Sign In Button
+  signInBtn: {
+    backgroundColor: '#004080',
+    padding: 14,
     alignItems: 'center',
-    shadowColor: Colors.light.purple,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: 20,
   },
-  loginButtonText: {
+  signInText: {
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: 'bold',
     fontSize: 16,
-    letterSpacing: 0.3,
+    letterSpacing: 1,
   },
-  dividerContainer: {
+
+  // Divider
+  divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 28,
+    marginVertical: 20,
   },
-  divider: {
+  line: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#ccc',
   },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#999',
+  or: {
+    marginHorizontal: 12,
+    color: '#666',
     fontSize: 13,
   },
-  googleButton: {
+
+  // Google Button
+  googleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
     backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  googleIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#4285F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+  googleG: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4285F4',
+    marginRight: 10,
   },
-  googleIcon: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  googleButtonText: {
-    color: '#1A1A1A',
-    fontWeight: '600',
+  googleText: {
     fontSize: 15,
+    color: '#333',
+    fontWeight: '600',
   },
-  signupContainer: {
+
+  // Sign Up
+  signup: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 32,
+    marginTop: 30,
   },
   signupText: {
+    fontSize: 14,
     color: '#666',
-    fontSize: 15,
   },
   signupLink: {
-    color: Colors.light.purple,
-    fontWeight: '700',
-    fontSize: 15,
+    fontSize: 14,
+    color: '#004080',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
 });

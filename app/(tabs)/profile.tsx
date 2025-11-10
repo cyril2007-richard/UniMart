@@ -1,18 +1,18 @@
 
-import { MoreHorizontal, Settings, Grid, List } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, FlatList, Dimensions, useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Grid, List, MoreHorizontal, Settings } from 'lucide-react-native';
+import React, { useState, useMemo } from 'react';
+import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useListings } from '../../contexts/ListingsContext';
-import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const imageSize = (width - 40) / 3; // (padding - gaps) / numColumns
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const theme = Colors.light;
   const [activeTab, setActiveTab] = useState('grid');
   const { currentUser } = useAuth();
   const { listings } = useListings();
@@ -26,7 +26,12 @@ export default function ProfileScreen() {
     );
   }
 
-  const userListings = listings.filter(listing => listing.userId === currentUser.id);
+  const userListings = useMemo(() => {
+    if (!currentUser) {
+      return [];
+    }
+    return listings.filter(listing => listing.userId === currentUser.id);
+  }, [listings, currentUser]);
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -92,7 +97,7 @@ export default function ProfileScreen() {
           numColumns={3}
           scrollEnabled={false}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.listingItem}>
+            <TouchableOpacity style={styles.listingItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
               <Image source={{ uri: item.images[0] }} style={styles.listingImage} />
             </TouchableOpacity>
           )}
@@ -100,9 +105,19 @@ export default function ProfileScreen() {
           columnWrapperStyle={styles.listingRow}
         />
       ) : (
-        <View style={styles.listViewContainer}>
-          <Text style={{color: theme.text}}>List view not implemented yet.</Text>
-        </View>
+        <FlatList
+          data={userListings}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.listItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
+              <Image source={{ uri: item.images[0] }} style={styles.listImage} />
+              <View style={styles.listItemDetails}>
+                <Text style={styles.listItemTitle}>{item.title}</Text>
+                <Text style={styles.listItemPrice}>${item.price}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item.id}
+        />
       )}
     </ScrollView>
   );
@@ -227,6 +242,40 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 10,
+  },
+
+  // ✅ ADDED missing list styles below:
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginBottom: 12,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  listImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  listItemDetails: {
+    flex: 1,
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  listItemPrice: {
+    fontSize: 14,
+    color: Colors.light.purple,
+    fontWeight: 'bold',
   },
   listViewContainer: {
     alignItems: 'center',

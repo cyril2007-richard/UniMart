@@ -1,27 +1,40 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, useColorScheme } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../constants/Colors';
-import { useListings } from '../contexts/ListingsContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function AnnouncementScreen() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { listings } = useListings();
+  const { notifications, removeNotification } = useNotification();
+
+  const renderNotification = ({ item }: { item: any }) => (
+    <View style={[styles.notification, styles[item.type]]}>
+      <Text style={styles.notificationMessage}>{item.message}</Text>
+      <TouchableOpacity onPress={() => removeNotification(item.id)}>
+        <Ionicons name="close-circle" size={24} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text }]}>Announcements</Text>
-      <FlatList
-        data={listings}
-        renderItem={({ item }) => (
-          <View style={[styles.listingItem, { backgroundColor: theme.background, borderColor: theme.tabIconDefault }]}>
-            <Text style={[styles.listingTitle, { color: theme.text }]}>{item.title}</Text>
-            <Text style={[styles.listingPrice, { color: theme.purple }]}>${item.price}</Text>
-          </View>
-        )}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-      />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Notifications</Text>
+      </View>
+
+      {notifications.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="notifications-off-outline" size={100} color={Colors.light.gray} />
+          <Text style={styles.emptyText}>No new notifications</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          renderItem={renderNotification}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+        />
+      )}
     </View>
   );
 }
@@ -29,28 +42,53 @@ export default function AnnouncementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: Colors.light.background,
+    paddingTop: 50,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    marginBottom: 20,
+    color: Colors.light.text,
   },
-  listingItem: {
-    padding: 15,
-    borderWidth: 1,
-    borderRadius: 10,
-    marginBottom: 10,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: Colors.light.gray,
+    marginTop: 20,
+  },
+  list: {
+    paddingHorizontal: 20,
+  },
+  notification: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  listingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  success: {
+    backgroundColor: '#2ecc71',
   },
-  listingPrice: {
+  error: {
+    backgroundColor: '#e74c3c',
+  },
+  info: {
+    backgroundColor: '#3498db',
+  },
+  notificationMessage: {
+    flex: 1,
+    color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    marginRight: 10,
   },
 });

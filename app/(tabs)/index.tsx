@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Bell, Bike, Package, Search, Settings, ShoppingCart, TrendingUp } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
-import { Dimensions, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Dimensions, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -9,8 +9,7 @@ const CAROUSEL_ITEM_WIDTH = SCREEN_WIDTH - 60;
 const CAROUSEL_SPACING = 16;
 
 export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const theme = Colors.light;
   const router = useRouter();
   const carouselRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -61,7 +60,7 @@ export default function HomeScreen() {
       <View style={styles.searchContainer}>
         <TouchableOpacity 
           onPress={() => router.push('/search')}
-          style={[styles.searchBar, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f5f5f7' }]}
+          style={[styles.searchBar, { backgroundColor: '#f5f5f7' }]}
           activeOpacity={0.7}
         >
           <Search color={theme.tabIconDefault} size={20} strokeWidth={2} />
@@ -95,7 +94,7 @@ export default function HomeScreen() {
                 style={[
                   styles.carouselCard,
                   { 
-                    backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff',
+                    backgroundColor: '#fff',
                     marginLeft: index === 0 ? 20 : 0,
                     marginRight: index === sponsors.length - 1 ? 20 : CAROUSEL_SPACING,
                   }
@@ -122,9 +121,7 @@ export default function HomeScreen() {
                 style={[
                   styles.paginationDot,
                   {
-                    backgroundColor: activeIndex === index 
-                      ? (colorScheme === 'dark' ? '#fff' : '#000')
-                      : (colorScheme === 'dark' ? '#3a3a3c' : '#d1d1d6'),
+                    backgroundColor: activeIndex === index ? '#000' : '#d1d1d6',
                     width: activeIndex === index ? 24 : 8,
                   }
                 ]}
@@ -135,7 +132,7 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff' }]} onPress={() => router.push('/how-to-buy')}>
+          <TouchableOpacity style={[styles.actionCard, { backgroundColor: '#fff' }]} onPress={() => router.push('/how-to-buy')}>
             <View style={[styles.actionIconContainer, { backgroundColor: '#4CAF50' }]}>
               <TrendingUp color="#fff" size={22} strokeWidth={2.5} />
             </View>
@@ -145,7 +142,7 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff' }]} onPress={() => router.push('/how-to-sell')}>
+          <TouchableOpacity style={[styles.actionCard, { backgroundColor: '#fff' }]} onPress={() => router.push('/how-to-sell')}>
             <View style={[styles.actionIconContainer, { backgroundColor: '#2196F3' }]}>
               <Package color="#fff" size={22} strokeWidth={2.5} />
             </View>
@@ -155,7 +152,7 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff' }]} onPress={() => router.push('/apply')}>
+          <TouchableOpacity style={[styles.actionCard, { backgroundColor: '#fff' }]} onPress={() => router.push('/apply')}>
             <View style={[styles.actionIconContainer, { backgroundColor: '#FF9800' }]}>
               <Bike color="#fff" size={22} strokeWidth={2.5} />
             </View>
@@ -164,36 +161,6 @@ export default function HomeScreen() {
               Earn extra cash
             </Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Featured Products Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Featured Products</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={[styles.productPlaceholder, { backgroundColor: colorScheme === 'dark' ? '#2c2c2e' : '#f5f5f7' }]}>
-            <Text style={[styles.placeholderText, { color: theme.tabIconDefault }]}>
-              Product carousel
-            </Text>
-          </View>
-        </View>
-
-        {/* Recommended Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Recommended for you</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={[styles.productPlaceholder, { backgroundColor: colorScheme === 'dark' ? '#2c2c2e' : '#f5f5f7' }]}>
-            <Text style={[styles.placeholderText, { color: theme.tabIconDefault }]}>
-              Personalized recommendations
-            </Text>
-          </View>
         </View>
 
         {/* Bottom Spacing */}
@@ -323,35 +290,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 14,
-  },
-  sectionContainer: {
-    paddingHorizontal: 20,
-    marginTop: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  seeAllText: {
-    fontSize: 15,
-    color: '#2196F3',
-    fontWeight: '600',
-  },
-  productPlaceholder: {
-    height: 180,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 15,
-    fontWeight: '500',
   },
 });
