@@ -1,14 +1,14 @@
 
 import { useRouter } from 'expo-router';
 import { Grid, List, MoreHorizontal, Settings } from 'lucide-react-native';
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useListings } from '../../contexts/ListingsContext';
 
 const { width } = Dimensions.get('window');
-const imageSize = (width - 40) / 3; // (padding - gaps) / numColumns
+const imageSize = (width - 40) / 3; 
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
