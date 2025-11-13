@@ -10,7 +10,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useColorScheme,
 } from 'react-native';
+import Colors from '../constants/Colors';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SignupScreen() {
@@ -27,6 +29,8 @@ export default function SignupScreen() {
   const [otp, setOtp] = useState('');
   const router = useRouter();
   const { signup } = useAuth();
+  const colorScheme = useColorScheme();
+  const colors = Colors.light;
 
   const FAKE_OTP = '123456';
 
@@ -94,6 +98,156 @@ export default function SignupScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: 32,
+      paddingVertical: 40,
+    },
+
+    // Header
+    header: {
+      alignItems: 'center',
+      marginBottom: 40,
+    },
+    logo: {
+      fontSize: 36,
+      fontWeight: 'bold',
+      color: colors.tint,
+      letterSpacing: 1,
+    },
+    tagline: {
+      fontSize: 14,
+      color: colors.text,
+      marginTop: 6,
+      fontStyle: 'italic',
+    },
+
+    // Form
+    form: {
+      backgroundColor: colors.background,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: colors.tabIconDefault,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.tint,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    subtitle: {
+      textAlign: 'center',
+      fontSize: 14,
+      color: colors.text,
+      marginBottom: 8,
+    },
+    phone: {
+      textAlign: 'center',
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.tint,
+      marginBottom: 20,
+    },
+
+    // Input Fields
+    field: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 14,
+      color: colors.text,
+      marginBottom: 6,
+      fontWeight: '600',
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.tabIconDefault,
+      backgroundColor: colors.background,
+      padding: 12,
+      fontSize: 15,
+      color: colors.text,
+    },
+
+    // Continue Button
+    continueBtn: {
+      backgroundColor: 'transparent',
+      padding: 14,
+      alignItems: 'center',
+      marginTop: 10,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: colors.tint,
+    },
+    continueText: {
+      color: colors.tint,
+      fontWeight: 'bold',
+      fontSize: 16,
+      letterSpacing: 1,
+    },
+
+    // Login Link
+    loginLink: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 10,
+    },
+    loginText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    loginLinkText: {
+      fontSize: 14,
+      color: colors.tint,
+      fontWeight: 'bold',
+      textDecorationLine: 'underline',
+    },
+
+    // OTP Input
+    otpInput: {
+      borderWidth: 1,
+      borderColor: colors.tabIconDefault,
+      backgroundColor: colors.background,
+      padding: 16,
+      marginBottom: 20,
+      fontSize: 22,
+      letterSpacing: 8,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      color: colors.text,
+    },
+
+    // Verify Button
+    verifyBtn: {
+      backgroundColor: 'transparent',
+      padding: 14,
+      alignItems: 'center',
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: colors.tint,
+    },
+    verifyText: {
+      color: colors.tint,
+      fontWeight: 'bold',
+      fontSize: 16,
+      letterSpacing: 1,
+    },
+
+    // Back Link
+    backLink: {
+      color: colors.tint,
+      textAlign: 'center',
+      fontSize: 14,
+      textDecorationLine: 'underline',
+    },
+  });
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -132,6 +286,7 @@ export default function SignupScreen() {
                   keyboardType='default'
                   secureTextEntry={field.secure || false}
                   autoCapitalize="none"
+                  placeholderTextColor={colors.tabIconDefault}
                 />
               </View>
             ))}
@@ -163,6 +318,7 @@ export default function SignupScreen() {
               keyboardType="number-pad"
               maxLength={6}
               textAlign="center"
+              placeholderTextColor={colors.tabIconDefault}
             />
 
             <TouchableOpacity style={styles.verifyBtn} onPress={handleVerifyOTP}>
@@ -178,153 +334,3 @@ export default function SignupScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-// ===========================================
-// NOSTALGIC 2000s STYLES
-// ===========================================
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f0f0f0',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 40,
-  },
-
-  // Header
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logo: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#004080',
-    letterSpacing: 1,
-    fontFamily: 'Courier New',
-  },
-  tagline: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 6,
-    fontStyle: 'italic',
-  },
-
-  // Form
-  form: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderWidth: 2,
-    borderColor: '#ccc',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#004080',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  subtitle: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  phone: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#004080',
-    marginBottom: 20,
-  },
-
-  // Input Fields
-  field: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 6,
-    fontWeight: '600',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#999',
-    backgroundColor: '#fff',
-    padding: 12,
-    fontSize: 15,
-    fontFamily: 'Arial',
-  },
-
-  // Continue Button
-  continueBtn: {
-    backgroundColor: '#004080',
-    padding: 14,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  continueText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    letterSpacing: 1,
-  },
-
-  // Login Link
-  loginLink: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  loginText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  loginLinkText: {
-    fontSize: 14,
-    color: '#004080',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-  },
-
-  // OTP Input
-  otpInput: {
-    borderWidth: 1,
-    borderColor: '#999',
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 20,
-    fontSize: 22,
-    letterSpacing: 8,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontFamily: 'Courier New',
-  },
-
-  // Verify Button
-  verifyBtn: {
-    backgroundColor: '#004080',
-    padding: 14,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  verifyText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    letterSpacing: 1,
-  },
-
-  // Back Link
-  backLink: {
-    color: '#004080',
-    textAlign: 'center',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  },
-});

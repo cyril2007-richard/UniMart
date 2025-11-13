@@ -41,6 +41,7 @@ const mockData: Category[] = [
       "Energy Drinks",
       "Coffee & Tea",
       "Cereals",
+      
       "Ready-to-Eat Meals",
       "Chocolates & Sweets",
       "Nuts & Seeds",

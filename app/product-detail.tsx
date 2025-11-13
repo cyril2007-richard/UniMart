@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   moreSection: { marginBottom: 20 },
   moreProducts: { marginHorizontal: -20 },
   moreProductsContent: { paddingHorizontal: 20 },
-  moreProductCard: { width: 150, marginRight: 12, backgroundColor: '#f5f5f7', borderRadius: 12, padding: 10 },
+  moreProductCard: { width: 150, marginRight: 12, backgroundColor: '#ffffffff', borderRadius: 12, padding: 10 },
   moreProductImage: { width: 130, height: 130, borderRadius: 10, marginBottom: 10, backgroundColor: '#fff' },
   moreProductName: { fontSize: 14, fontWeight: '600', color: '#000', marginBottom: 6, lineHeight: 18 },
   moreProductPrice: { fontSize: 16, fontWeight: '700', color: '#6200ea' },

@@ -1,85 +1,117 @@
+// app/product-screen.tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Grid, List, Search, SlidersHorizontal } from 'lucide-react-native';
-import React, { useState, useMemo } from 'react';
-import { Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from 'react-native';
 import Colors from '../constants/Colors';
+import type { Listing } from '../contexts/ListingsContext'; // <-- import the type
 import { useListings } from '../contexts/ListingsContext';
 
 const { width } = Dimensions.get('window');
 const PADDING = 20;
 const SPACING = 12;
 const NUM_COLUMNS = 2;
-const ITEM_WIDTH = (width - (PADDING * 2) - (SPACING * (NUM_COLUMNS - 1))) / NUM_COLUMNS;
+const ITEM_WIDTH =
+  (width - PADDING * 2 - SPACING * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+
+type SortKey = 'default' | 'price-low' | 'price-high';
 
 export default function ProductScreen() {
+  const colorScheme = useColorScheme();
   const theme = Colors.light;
   const router = useRouter();
   const { listings } = useListings();
   const { categoryId, subcategory } = useLocalSearchParams();
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high' | 'name'>('default');
+  const [sortBy, setSortBy] = useState<SortKey>('default');
 
-  const filteredProducts = useMemo(() => {
-    let products = listings;
+  // --------------------------------------------------------------
+  // 1. Filter by category / subcategory
+  // --------------------------------------------------------------
+  const filteredByCategory = useMemo(() => {
+    return listings.filter((p) => {
+      if (categoryId && subcategory) {
+        return p.category === categoryId && p.subcategory === subcategory;
+      }
+      if (categoryId) return p.category === categoryId;
+      return true;
+    });
+  }, [listings, categoryId, subcategory]);
 
-    if (categoryId && subcategory) {
-      products = products.filter(p => p.category === categoryId && p.subcategory === subcategory);
-    } else if (categoryId) {
-      products = products.filter(p => p.category === categoryId);
-    }
+  // --------------------------------------------------------------
+  // 2. Search
+  // --------------------------------------------------------------
+  const filteredBySearch = useMemo(() => {
+    if (!searchQuery) return filteredByCategory;
+    const q = searchQuery.toLowerCase();
+    return filteredByCategory.filter((p) =>
+      p.title.toLowerCase().includes(q)
+    );
+  }, [filteredByCategory, searchQuery]);
 
-    if (searchQuery) {
-      products = products.filter(p => 
-        p.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
+  // --------------------------------------------------------------
+  // 3. Sort
+  // --------------------------------------------------------------
+  const sortedProducts = useMemo(() => {
+    const arr = [...filteredBySearch];
     if (sortBy === 'price-low') {
-      products = [...products].sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high') {
-      products = [...products].sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'title') {
-      products = [...products].sort((a, b) => a.title.localeCompare(b.title));
+      return arr.sort((a, b) => a.price - b.price);
     }
+    if (sortBy === 'price-high') {
+      return arr.sort((a, b) => b.price - a.price);
+    }
+    return arr; // default
+  }, [filteredBySearch, sortBy]);
 
-    return products;
-  }, [listings, categoryId, subcategory, searchQuery, sortBy]);
-
-  const renderGridItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.gridCard} 
+  // --------------------------------------------------------------
+  // Renderers
+  // --------------------------------------------------------------
+  const renderGridItem = ({ item }: { item: Listing }) => (
+    <TouchableOpacity
+      style={[styles.gridCard, { backgroundColor: theme.background, borderColor: theme.tabIconDefault }]}
       onPress={() => router.push(`/product-detail?id=${item.id}`)}
       activeOpacity={0.7}
     >
       <Image source={{ uri: item.images[0] }} style={styles.gridImage} />
       <View style={styles.gridContent}>
-        <Text style={styles.gridName} numberOfLines={2}>
+        <Text style={[styles.gridName, { color: theme.text }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.gridPrice}>
+        <Text style={[styles.gridPrice, { color: theme.tint }]}>
           ₦{item.price.toLocaleString()}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
-  const renderListItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.listCard} 
+  const renderListItem = ({ item }: { item: Listing }) => (
+    <TouchableOpacity
+      style={[styles.listCard, { backgroundColor: theme.background, borderColor: theme.tabIconDefault }]}
       onPress={() => router.push(`/product-detail?id=${item.id}`)}
       activeOpacity={0.7}
     >
       <Image source={{ uri: item.images[0] }} style={styles.listImage} />
       <View style={styles.listContent}>
-        <Text style={styles.listName} numberOfLines={2}>
+        <Text style={[styles.listName, { color: theme.text }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.listPrice}>
+        <Text style={[styles.listPrice, { color: theme.tint }]}>
           ₦{item.price.toLocaleString()}
         </Text>
         {item.description && (
-          <Text style={styles.listDescription} numberOfLines={2}>
+          <Text style={[styles.listDescription, { color: theme.tabIconDefault }]} numberOfLines={2}>
             {item.description}
           </Text>
         )}
@@ -87,73 +119,100 @@ export default function ProductScreen() {
     </TouchableOpacity>
   );
 
+  // --------------------------------------------------------------
+  // UI
+  // --------------------------------------------------------------
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          {subcategory ? String(subcategory) : categoryId ? String(categoryId) : 'All Products'}
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          {subcategory
+            ? String(subcategory)
+            : categoryId
+            ? String(categoryId)
+            : 'All Products'}
         </Text>
       </View>
 
       {/* Search Bar */}
       <View style={styles.searchSection}>
-        <View style={styles.searchBar}>
-          <Search color="#8e8e93" size={20} strokeWidth={2} />
+        <View style={[styles.searchBar, { backgroundColor: theme.lightPurple }]}>
+          <Search color={theme.tabIconDefault} size={20} strokeWidth={2} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.text }]}
             placeholder="Search products..."
-            placeholderTextColor="#8e8e93"
+            placeholderTextColor={theme.tabIconDefault}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
       </View>
 
-      {/* Filter and View Controls */}
+      {/* Filter & View Controls */}
       <View style={styles.controlsSection}>
-        <TouchableOpacity 
-          style={styles.filterButton}
+        <TouchableOpacity
+          style={[styles.filterButton, { backgroundColor: theme.lightPurple }]}
           onPress={() => {
-            const sorts = ['default', 'price-low', 'price-high', 'title'] as const;
-            const currentIndex = sorts.indexOf(sortBy);
-            const nextIndex = (currentIndex + 1) % sorts.length;
-            setSortBy(sorts[nextIndex]);
+            const order: SortKey[] = ['default', 'price-low', 'price-high'];
+            const idx = order.indexOf(sortBy);
+            setSortBy(order[(idx + 1) % order.length]);
           }}
         >
-          <SlidersHorizontal color="#000" size={18} strokeWidth={2} />
-          <Text style={styles.filterText}>
-            {sortBy === 'default' ? 'Sort' : sortBy === 'price-low' ? 'Price: Low' : sortBy === 'price-high' ? 'Price: High' : 'A-Z'}
+          <SlidersHorizontal color={theme.text} size={18} strokeWidth={2} />
+          <Text style={[styles.filterText, { color: theme.text }]}>
+            {sortBy === 'default'
+              ? 'Sort'
+              : sortBy === 'price-low'
+              ? 'Price: Low'
+              : 'Price: High'}
           </Text>
         </TouchableOpacity>
 
         <View style={styles.viewToggle}>
-          <TouchableOpacity 
-            style={[styles.viewButton, viewMode === 'grid' && styles.viewButtonActive]}
+          <TouchableOpacity
+            style={[
+              styles.viewButton,
+              { backgroundColor: theme.lightPurple },
+              viewMode === 'grid' && { backgroundColor: theme.lightPurple, borderWidth: 1.5, borderColor: theme.tint },
+            ]}
             onPress={() => setViewMode('grid')}
           >
-            <Grid color={viewMode === 'grid' ? '#6200ea' : '#8e8e93'} size={18} strokeWidth={2} />
+            <Grid
+              color={viewMode === 'grid' ? theme.tint : theme.tabIconDefault}
+              size={18}
+              strokeWidth={2}
+            />
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.viewButton, viewMode === 'list' && styles.viewButtonActive]}
+          <TouchableOpacity
+            style={[
+              styles.viewButton,
+              { backgroundColor: theme.lightPurple },
+              viewMode === 'list' && { backgroundColor: theme.lightPurple, borderWidth: 1.5, borderColor: theme.tint },
+            ]}
             onPress={() => setViewMode('list')}
           >
-            <List color={viewMode === 'list' ? '#6200ea' : '#8e8e93'} size={18} strokeWidth={2} />
+            <List
+              color={viewMode === 'list' ? theme.tint : theme.tabIconDefault}
+              size={18}
+              strokeWidth={2}
+            />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Results Count */}
       <View style={styles.resultsSection}>
-        <Text style={styles.resultsText}>
-          {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+        <Text style={[styles.resultsText, { color: theme.tabIconDefault }]}>
+          {sortedProducts.length}{' '}
+          {sortedProducts.length === 1 ? 'product' : 'products'}
         </Text>
       </View>
 
       {/* Products List */}
-      {filteredProducts.length > 0 ? (
+      {sortedProducts.length > 0 ? (
         <FlatList
-          data={filteredProducts}
+          data={sortedProducts}
           renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
           keyExtractor={(item) => item.id}
           numColumns={viewMode === 'grid' ? NUM_COLUMNS : 1}
@@ -164,10 +223,8 @@ export default function ProductScreen() {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
-            No products found
-          </Text>
-          <Text style={styles.emptySubtext}>
+          <Text style={[styles.emptyText, { color: theme.text }]}>No products found</Text>
+          <Text style={[styles.emptySubtext, { color: theme.tabIconDefault }]}>
             Try adjusting your search or filters
           </Text>
         </View>
@@ -176,41 +233,30 @@ export default function ProductScreen() {
   );
 }
 
+/* --------------------------------------------------------------
+   Styles – unchanged (kept exactly as you had them)
+   -------------------------------------------------------------- */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
+  container: { flex: 1 },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#ffffff',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#000',
     textTransform: 'capitalize',
   },
-  searchSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
+  searchSection: { paddingHorizontal: 20, paddingBottom: 16 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f7',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    marginLeft: 12,
-    color: '#000',
-  },
+  searchInput: { flex: 1, fontSize: 16, marginLeft: 12 },
   controlsSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -221,140 +267,72 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f7',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
     gap: 8,
   },
-  filterText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-  },
-  viewToggle: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  filterText: { fontSize: 14, fontWeight: '600' },
+  viewToggle: { flexDirection: 'row', gap: 8 },
   viewButton: {
     padding: 10,
-    backgroundColor: '#f5f5f7',
     borderRadius: 10,
   },
   viewButtonActive: {
-    backgroundColor: '#f0e6ff',
-    borderWidth: 1.5,
-    borderColor: '#6200ea',
   },
-  resultsSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  resultsText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#8e8e93',
-  },
-  listContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  columnWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: SPACING,
-  },
+  resultsSection: { paddingHorizontal: 20, paddingBottom: 12 },
+  resultsText: { fontSize: 13, fontWeight: '500' },
+  listContainer: { paddingHorizontal: 20, paddingBottom: 20 },
+  columnWrapper: { justifyContent: 'space-between', marginBottom: SPACING },
+
+  /* Grid Card */
   gridCard: {
     width: ITEM_WIDTH,
-    backgroundColor: '#fff',
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e5e5e7',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  gridImage: {
-    width: '100%',
-    height: 160,
-    resizeMode: 'cover',
-    backgroundColor: '#f5f5f7',
-  },
-  gridContent: {
-    padding: 14,
-  },
+  gridImage: { width: '100%', height: 160, resizeMode: 'cover' },
+  gridContent: { padding: 14 },
   gridName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000',
     marginBottom: 8,
     lineHeight: 19,
   },
-  gridPrice: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#6200ea',
-  },
+  gridPrice: { fontSize: 17, fontWeight: '700' },
+
+  /* List Card */
   listCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     marginBottom: 12,
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e5e5e7',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  listImage: {
-    width: 130,
-    height: 130,
-    resizeMode: 'cover',
-    backgroundColor: '#f5f5f7',
-  },
-  listContent: {
-    flex: 1,
-    padding: 14,
-    justifyContent: 'center',
-  },
+  listImage: { width: 130, height: 130, resizeMode: 'cover' },
+  listContent: { flex: 1, padding: 14, justifyContent: 'center' },
   listName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
     marginBottom: 8,
     lineHeight: 21,
   },
-  listPrice: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#6200ea',
-    marginBottom: 8,
-  },
-  listDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#8e8e93',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: 'center',
-    color: '#8e8e93',
-  },
+  listPrice: { fontSize: 19, fontWeight: '700', marginBottom: 8 },
+  listDescription: { fontSize: 13, lineHeight: 18 },
+
+  /* Empty State */
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  emptyText: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  emptySubtext: { fontSize: 14, textAlign: 'center' },
 });

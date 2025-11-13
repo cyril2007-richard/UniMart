@@ -1,18 +1,29 @@
-const tintColorLight = '#680082ff'; // UNIBEN Purple
-const tintColorDark = '#FFD700';  // UNIBEN Gold
+const tintColorLight = '#8b2fdcff';
+const tintColorDark = '#fff';
 
 export default {
   light: {
     text: '#000',
     background: '#fff',
     tint: tintColorLight,
-    tabIconDefault: '#C4C4C4',
+    tabIconDefault: '#ccc',
     tabIconSelected: tintColorLight,
-    purple: '#7b3edfff',
+    purple: '#8b2fdcff',
     gold: '#FFD700',
-    lightPurple: '#ffffffff',
+    lightPurple: '#eef2f9',
     white: '#FFFFFF', // 👈 add these
     black: '#000000',
   },
-
+  dark: {
+    text: '#fff',
+    background: '#000',
+    tint: tintColorDark,
+    tabIconDefault: '#ccc',
+    tabIconSelected: tintColorDark,
+    purple: '#ab2fdcff',
+    gold: '#cedc2fff',
+    lightPurple: '#eef2f9',
+    white: '#FFFFFF', // 👈 add these
+    black: '#000000',
+  },
 };

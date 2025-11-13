@@ -83,20 +83,20 @@ export default function AddScreen() {
       .filter((a): a is NonNullable<typeof a> => !!a.uri && !!a.fileSize)
       .filter(a => a.fileSize! <= MAX_IMAGE_SIZE_MB * 1024 * 1024)
       .map(a => a.uri);
-
-    if (!valid.length) return;
-    if (res.assets.length > valid.length)
-      Alert.alert('Skipped', 'Some images >5 MB.');
-
-    setImages(p => [...p, ...valid].slice(0, MAX_IMAGES));
-  }, [images.length]);
-
-  const removeImage = useCallback((i: number) => {
-    setImages(p => p.filter((_, idx) => idx !== i));
-  }, []);
-
-  // ── Submit ───────────────────────────────────────────
-  const handleCreate = useCallback(async () => {
+      
+      if (!valid.length) return;
+      if (res.assets.length > valid.length)
+        Alert.alert('Skipped', 'Some images >5 MB.');
+      
+      setImages(p => [...p, ...valid].slice(0, MAX_IMAGES));
+    }, [images.length]);
+    
+    const removeImage = useCallback((i: number) => {
+      setImages(p => p.filter((_, idx) => idx !== i));
+    }, []);
+    
+    // ── Submit ───────────────────────────────────────────
+    const handleCreate = useCallback(async () => {
     if (!isValid || !currentUser) return;
     setLoading(true);
     try {
@@ -162,46 +162,31 @@ await addListing({
         onChangeText={t => setPrice(t.replace(/[^0-9]/g, ''))}
         maxLength={10}
       />
-
-      {/* Description */}
-      <Text style={styles.label}>Description</Text>
-      <TextInput
-        placeholder="Condition, specs, reason..."
-        style={styles.textArea}
-        multiline
-        value={description}
-        onChangeText={setDescription}
-        maxLength={1000}
-      />
-      <Text style={styles.charCount}>{description.length}/1000</Text>
-
-      {/* Photo uploader */}
-      <Text style={styles.label}>Photos ({images.length}/{MAX_IMAGES})</Text>
-      <TouchableOpacity
-        style={[styles.photoUploader, images.length >= MAX_IMAGES && styles.disabled]}
-        onPress={pickImages}
-        disabled={images.length >= MAX_IMAGES}
-      >
-        <Ionicons name="camera-outline" size={32} color={Colors.light.purple} />
-        <Text style={styles.photoText}>
-          {images.length ? 'Add more' : 'Tap to add photos'}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Image grid */}
-      {images.length > 0 && (
-        <View style={styles.imageGrid}>
-          {images.map((uri, i) => (
-            <View key={`${uri}-${i}`} style={styles.imageWrapper}>
-              <Image source={{ uri }} style={styles.image} resizeMode="cover" />
-              <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(i)}>
-                <Ionicons name="close-circle" size={28} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          ))}
+  {/* Photo uploader */}
+  <Text style={styles.label}>Photos ({images.length}/{MAX_IMAGES})</Text>
+  <TouchableOpacity
+    style={[styles.photoUploader, images.length >= MAX_IMAGES && styles.disabled]}
+    onPress={pickImages}
+    disabled={images.length >= MAX_IMAGES}
+  >
+    <Ionicons name="camera-outline" size={32} color={Colors.light.purple} />
+    <Text style={styles.photoText}>
+      {images.length ? 'Add more' : 'Tap to add photos'}
+    </Text>
+  </TouchableOpacity>
+  {/* Image grid */}
+  {images.length > 0 && (
+    <View style={styles.imageGrid}>
+      {images.map((uri, i) => (
+        <View key={`${uri}-${i}`} style={styles.imageWrapper}>
+          <Image source={{ uri }} style={styles.image} resizeMode="cover" />
+          <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(i)}>
+            <Ionicons name="close-circle" size={28} color="#fff" />
+          </TouchableOpacity>
         </View>
-      )}
-
+      ))}
+    </View>
+  )}
       {/* ── CATEGORY MENU ───────────────────────────────────── */}
       <Text style={styles.label}>Category</Text>
       <TouchableOpacity style={styles.menuBtn} onPress={() => setCatModal(true)}>
@@ -219,6 +204,21 @@ await addListing({
           </TouchableOpacity>
         </>
       )}
+
+      {/* Description */}
+      <Text style={styles.label}>Description</Text>
+      <TextInput
+        placeholder="Condition, specs, reason..."
+        style={styles.textArea}
+        multiline
+        value={description}
+        onChangeText={setDescription}
+        maxLength={1000}
+      />
+      <Text style={styles.charCount}>{description.length}/1000</Text>
+
+
+
 
       {/* Submit */}
       <TouchableOpacity

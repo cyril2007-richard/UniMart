@@ -1,23 +1,10 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs, useRouter } from 'expo-router';
 import { Home, MessageCircle, Plus, Search, User } from 'lucide-react-native';
 import React, { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, useColorScheme } from 'react-native';
 
-
+import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
-;
-
-// UNIBEN Colors
-const COLORS = {
-  purple: '#4B0082',
-  gold: '#FFD700',
-  lightPurple: '#6A0DAD',
-  darkPurple: '#330066',
-  black: '#000000',
-  gray: '#C4C4C4',
-  white: '#FFFFFF',
-};
 
 function TabIcon({
   Icon,
@@ -28,6 +15,24 @@ function TabIcon({
   color: string;
   focused: boolean;
 }) {
+  const colorScheme = useColorScheme();
+  const colors = Colors.light; 
+  const styles = StyleSheet.create({
+    iconContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 50,
+      height: 50,
+    },
+    activeDot: {
+      position: 'absolute',
+      bottom: 0,
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.tint,
+    },
+  });
   return (
     <View style={styles.iconContainer}>
       <Icon size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
@@ -37,6 +42,33 @@ function TabIcon({
 }
 
 function AddButton({ focused }: { focused: boolean }) {
+  const colorScheme = useColorScheme();
+  const colors = Colors.light;
+  const styles = StyleSheet.create({
+    addButtonContainer: {
+      width: 60,
+      height: 60,
+      marginTop: 0,
+    },
+    addButtonContainerActive: {
+      marginTop: -20,
+    },
+    addButton: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: colors.tint,
+      backgroundColor: colors.background,
+      shadowColor: colors.tint,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+  });
   return (
     <View
       style={[
@@ -44,21 +76,18 @@ function AddButton({ focused }: { focused: boolean }) {
         focused && styles.addButtonContainerActive,
       ]}
     >
-      <LinearGradient
-        colors={[COLORS.gold, '#FFA500']}
-        style={styles.addButtonGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <Plus size={28} color={COLORS.white} strokeWidth={3} />
-      </LinearGradient>
+      <View style={styles.addButton}>
+        <Plus size={28} color={colors.tint} strokeWidth={3} />
+      </View>
     </View>
   );
 }
 
 export default function TabLayout() {
   const { currentUser } = useAuth();
-  const router = useRouter();        
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const colors = Colors.light;
 
   useEffect(() => {
     if (!currentUser) {
@@ -75,16 +104,17 @@ export default function TabLayout() {
           height: Platform.OS === 'ios' ? 70 : 60,
           paddingBottom: Platform.OS === 'ios' ? 10 : 6,
           paddingTop: 16,
-          backgroundColor: COLORS.white,
-          borderTopWidth: 0,
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.tabIconDefault,
           elevation: 8,
-          shadowColor: '#000',
+          shadowColor: colors.text,
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.05,
           shadowRadius: 8,
         },
-        tabBarActiveTintColor: COLORS.purple,
-        tabBarInactiveTintColor: COLORS.gray,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
       }}
     >
       <Tabs.Screen
@@ -132,42 +162,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
-  },
-  activeDot: {
-    position: 'absolute',
-    bottom: 0,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.purple,
-  },
-  addButtonContainer: {
-    width: 60,
-    height: 60,
-    marginTop: 0,
-  },
-  addButtonContainerActive: {
-    marginTop: -20,
-  },
-  addButtonGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: COLORS.white,
-    shadowColor: COLORS.gold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});
