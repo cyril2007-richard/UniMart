@@ -13,6 +13,8 @@ export default {
     lightPurple: '#eef2f9',
     white: '#FFFFFF', // 👈 add these
     black: '#000000',
+    secondaryText: '#6c757d',
+    surface: '#f8f9fa',
   },
   dark: {
     text: '#fff',
@@ -25,5 +27,7 @@ export default {
     lightPurple: '#eef2f9',
     white: '#FFFFFF', // 👈 add these
     black: '#000000',
+    secondaryText: '#adb5bd',
+    surface: '#1c1c1e',
   },
 };

@@ -1,5 +1,8 @@
 // contexts/CartContext.tsx
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from './AuthContext';
 
 export interface CartItem {
   id: string;
@@ -12,45 +15,80 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Omit<CartItem, 'quantity'>) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  addToCart: (product: Omit<CartItem, 'quantity'>) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   getCartTotal: () => number;
+  loading: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { currentUser } = useAuth();
 
-  const addToCart = (product: Omit<CartItem, 'quantity'>) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+  useEffect(() => {
+    const fetchCart = async () => {
+      if (currentUser) {
+        setLoading(true);
+        const cartDocRef = doc(db, 'carts', currentUser.id);
+        const cartDoc = await getDoc(cartDocRef);
+        if (cartDoc.exists()) {
+          setCartItems(cartDoc.data().items || []);
+        } else {
+          setCartItems([]);
+        }
+        setLoading(false);
       } else {
-        return [...prevItems, { ...product, quantity: 1 }];
+        setCartItems([]);
+        setLoading(false);
       }
-    });
+    };
+
+    fetchCart();
+  }, [currentUser]);
+
+  const updateCartInFirestore = async (items: CartItem[]) => {
+    if (currentUser) {
+      const cartDocRef = doc(db, 'carts', currentUser.id);
+      await setDoc(cartDocRef, { items });
+    }
   };
 
-  const removeFromCart = (productId: string) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  const addToCart = async (product: Omit<CartItem, 'quantity'>) => {
+    const newCartItems = [...cartItems];
+    const existingItemIndex = newCartItems.findIndex((item) => item.id === product.id);
+
+    if (existingItemIndex > -1) {
+      newCartItems[existingItemIndex].quantity += 1;
+    } else {
+      newCartItems.push({ ...product, quantity: 1 });
+    }
+
+    setCartItems(newCartItems);
+    await updateCartInFirestore(newCartItems);
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
-      )
+  const removeFromCart = async (productId: string) => {
+    const newCartItems = cartItems.filter((item) => item.id !== productId);
+    setCartItems(newCartItems);
+    await updateCartInFirestore(newCartItems);
+  };
+
+  const updateQuantity = async (productId: string, quantity: number) => {
+    const newCartItems = cartItems.map((item) =>
+      item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
     );
+    setCartItems(newCartItems);
+    await updateCartInFirestore(newCartItems);
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     setCartItems([]);
+    await updateCartInFirestore([]);
   };
 
   const getCartTotal = () => {
@@ -66,6 +104,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         updateQuantity,
         clearCart,
         getCartTotal,
+        loading,
       }}
     >
       {children}

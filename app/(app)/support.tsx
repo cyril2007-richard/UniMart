@@ -1,25 +1,22 @@
+
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Colors from "../../constants/Colors";
-import { chats } from "../../constants/mockData";
 
-export default function ConversationScreen() {
-  const { id } = useLocalSearchParams();
+export default function SupportScreen() {
   const router = useRouter();
-  const chat = chats.find((c) => c.id === id);
-  const [messages, setMessages] = useState(chat?.messages || []);
+  const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
 
   const sendMessage = () => {
@@ -29,11 +26,8 @@ export default function ConversationScreen() {
     setText("");
   };
 
-  if (!chat) return null;
-
   return (
     <>
-      {/* 👇 Hide default header */}
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
@@ -46,7 +40,7 @@ export default function ConversationScreen() {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-            paddingTop: StatusBar.currentHeight || 40, // 👈 top spacing
+            paddingTop: StatusBar.currentHeight || 40,
             paddingBottom: 10,
             paddingHorizontal: 15,
             backgroundColor: "#fff",
@@ -55,7 +49,6 @@ export default function ConversationScreen() {
             elevation: 3,
           }}
         >
-          {/* Left: Back + Profile */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <TouchableOpacity onPress={() => router.back()}>
               <Ionicons
@@ -65,21 +58,9 @@ export default function ConversationScreen() {
                 style={{ marginRight: 5 }}
               />
             </TouchableOpacity>
-
-            <Image
-              source={{ uri: chat.avatar }}
-              style={{ width: 40, height: 40, borderRadius: 20 }}
-            />
             <View>
-              <Text style={{ fontWeight: "600", fontSize: 16 }}>{chat.name}</Text>
-              <Text style={{ fontSize: 12, color: "gray" }}>{chat.lastSeen}</Text>
+              <Text style={{ fontWeight: "600", fontSize: 16 }}>Customer Support</Text>
             </View>
-          </View>
-
-          {/* Right: Icons */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
-            <Ionicons name="videocam-outline" size={22} color={Colors.light.purple} />
-            <Ionicons name="call-outline" size={22} color={Colors.light.purple} />
           </View>
         </View>
 
@@ -119,9 +100,6 @@ export default function ConversationScreen() {
             borderColor: "#eee",
           }}
         >
-          <TouchableOpacity>
-            <Ionicons name="happy-outline" size={24} color="gray" style={{ marginRight: 8 }} />
-          </TouchableOpacity>
           <TextInput
             value={text}
             onChangeText={setText}

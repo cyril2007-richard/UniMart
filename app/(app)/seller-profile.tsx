@@ -1,84 +1,90 @@
-
-import { useRouter } from 'expo-router';
-import { Grid, List, MoreHorizontal, Settings } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
-import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { Grid, List, ChevronLeft } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
-import { useAuth } from '../../contexts/AuthContext';
-import { useListings } from '../../contexts/ListingsContext';
+import { type Listing } from '../../contexts/ListingsContext';
+import { db } from '../../firebase';
 
 const { width } = Dimensions.get('window');
-const imageSize = (width - 40) / 3; 
+const imageSize = (width - 40) / 3; // (padding - gaps) / numColumns
 
-export default function ProfileScreen() {
-  const colorScheme = useColorScheme();
+export default function SellerProfileScreen() {
+  const { id } = useLocalSearchParams();
+  const [seller, setSeller] = useState<any>(null);
+  const [sellerProducts, setSellerProducts] = useState<Listing[]>([]);
   const theme = Colors.light;
   const [activeTab, setActiveTab] = useState('grid');
-  const { currentUser } = useAuth();
-  const { listings } = useListings();
   const router = useRouter();
 
-  if (!currentUser) {
+  useEffect(() => {
+    if (id) {
+      const fetchSellerData = async () => {
+        const sellerDocRef = doc(db, 'users', id as string);
+        const sellerDoc = await getDoc(sellerDocRef);
+        if (sellerDoc.exists()) {
+          setSeller({ id: sellerDoc.id, ...sellerDoc.data() });
+        }
+
+        const q = query(collection(db, 'listings'), where('sellerId', '==', id));
+        const querySnapshot = await getDocs(q);
+        const products = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Listing));
+        setSellerProducts(products);
+      };
+      fetchSellerData();
+    }
+  }, [id]);
+
+  if (!seller) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <Text style={{ fontSize: 16, color: theme.text }}>No user logged in.</Text>
+        <Text style={{ fontSize: 16, color: theme.text }}>Seller not found.</Text>
       </View>
     );
   }
 
-  const userListings = useMemo(() => {
-    if (!currentUser) {
-      return [];
-    }
-    return listings.filter(listing => listing.userId === currentUser.id);
-  }, [listings, currentUser]);
-
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.username, { color: theme.text }]}>{currentUser.username}</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/settings')}>
-            <Settings color={theme.text} size={24} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <MoreHorizontal color={theme.text} size={24} />
-          </TouchableOpacity>
+        <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <ChevronLeft size={24} color={theme.text} />
+            </TouchableOpacity>
+            <Text style={[styles.username, { color: theme.text }]}>{seller.username}</Text>
+            <View style={{width: 24}}/>
         </View>
-      </View>
 
       <View style={styles.profileSection}>
         <Image
-          source={{ uri: currentUser.profilePicture }}
+          source={{ uri: seller.profilePicture }}
           style={styles.profilePicture}
         />
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>{userListings.length}</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{sellerProducts.length}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Listings</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>324</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{seller.followers}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Followers</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>180</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{seller.following}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Following</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.bioSection}>
-        <Text style={[styles.name, { color: theme.text }]}>{currentUser.name}</Text>
-        <Text style={[styles.bioText, { color: theme.tabIconDefault }]}>{currentUser.matricNumber}</Text>
+        <Text style={[styles.name, { color: theme.text }]}>{seller.name}</Text>
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.primaryButton, { backgroundColor: theme.purple }]}>
-          <Text style={[styles.primaryButtonText, { color: theme.white }]}>Edit Profile</Text>
+          <Text style={[styles.primaryButtonText, { color: theme.white }]}>Follow</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryButton, { borderColor: theme.purple }]}>
-          <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Share Profile</Text>
+          <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Message</Text>
         </TouchableOpacity>
       </View>
 
@@ -93,11 +99,12 @@ export default function ProfileScreen() {
 
       {activeTab === 'grid' ? (
         <FlatList
-          data={userListings}
+          data={sellerProducts}
           numColumns={3}
-          scrollEnabled={false}
+          scrollEnabled={false} // Disables scrolling for the inner FlatList
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.listingItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
+              {/* --- FIX #1 --- */}
               <Image source={{ uri: item.images[0] }} style={styles.listingImage} />
             </TouchableOpacity>
           )}
@@ -106,13 +113,16 @@ export default function ProfileScreen() {
         />
       ) : (
         <FlatList
-          data={userListings}
+          data={sellerProducts}
+          scrollEnabled={false} // Disables scrolling for the inner FlatList
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.listItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
+              {/* --- FIX #2 --- */}
               <Image source={{ uri: item.images[0] }} style={styles.listImage} />
               <View style={styles.listItemDetails}>
+                {/* --- FIX #3 --- */}
                 <Text style={styles.listItemTitle}>{item.title}</Text>
-                <Text style={styles.listItemPrice}>${item.price}</Text>
+                <Text style={styles.listItemPrice}>₦{item.price}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -122,6 +132,7 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 }
+
 
 
 const styles = StyleSheet.create({
@@ -135,7 +146,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    paddingTop: 50,
+    paddingTop: 60,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -144,13 +155,6 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 22,
     fontWeight: 'bold',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  iconButton: {
-    padding: 5,
   },
   profileSection: {
     flexDirection: 'row',
@@ -184,10 +188,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  bioText: {
-    fontSize: 14,
-    marginTop: 5,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -229,6 +229,7 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomWidth: 2,
+    // Note: You might want to add borderBottomColor: theme.purple here
   },
   listingRow: {
     justifyContent: 'space-between',
@@ -243,26 +244,24 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 10,
   },
-
-  // ✅ ADDED missing list styles below:
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 10,
-    marginBottom: 12,
     padding: 10,
+    marginBottom: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   listImage: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 10,
-    marginRight: 15,
+    marginRight: 10,
   },
   listItemDetails: {
     flex: 1,
@@ -270,15 +269,17 @@ const styles = StyleSheet.create({
   listItemTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 5,
   },
   listItemPrice: {
     fontSize: 14,
     color: Colors.light.purple,
-    fontWeight: 'bold',
+    marginTop: 5,
   },
   listViewContainer: {
     alignItems: 'center',
     paddingVertical: 50,
   },
+  backButton: {
+      padding: 5,
+  }
 });

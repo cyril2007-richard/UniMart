@@ -1,8 +1,8 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Colors from '../../constants/Colors';
 
 export default function ApplyScreen() {
   const router = useRouter();
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: Colors.light.gray,
+    color: Colors.light.white,
     textAlign: 'center',
     marginBottom: 20,
   },

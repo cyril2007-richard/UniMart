@@ -1,7 +1,7 @@
 // src/screens/ShopScreen.tsx
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -10,19 +10,35 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
+  ActivityIndicator,
 } from "react-native";
-import Colors from "../../constants/Colors";
-import mockData from "../../constants/mockData";
+import Colors from "../../../constants/Colors";
+import { useCategories } from "../../../contexts/CategoryContext";
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors.light;
   const router = useRouter();
+  const { categories, loading } = useCategories();
 
-  const [selectedCategory, setSelectedCategory] = useState(mockData[0].id);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  const currentCategory = mockData.find((c) => c.id === selectedCategory);
+  useEffect(() => {
+    if (categories.length > 0) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [categories]);
+
+  const currentCategory = categories.find((c) => c.id === selectedCategory);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -67,7 +83,7 @@ export default function ShopScreen() {
         {/* Sidebar Categories */}
         <View style={[styles.sidebar, { backgroundColor: theme.white }]}>
           <FlatList
-            data={mockData}
+            data={categories}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => {

@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import mockData from '../constants/mockData';
-import { useListings, type Listing } from '../contexts/ListingsContext';
+import mockData from '../../constants/mockData';
+import { useListings, type Listing } from '../../contexts/ListingsContext';
 
 export default function SearchScreen() {
   const { listings } = useListings();

@@ -1,12 +1,21 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { users as mockUsers } from '../constants/mockData';
+import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 type User = {
   id: string;
   name: string;
   username: string;
   email: string;
-  password: string;
   profilePicture: string;
   matricNumber: string;
   faculty: string;
@@ -14,57 +23,134 @@ type User = {
   following: number;
 };
 
+// --- FIX: Create a simpler, more accurate type for new user data ---
+// This includes all User fields except the auto-generated ones, plus password
+type SignUpData = Omit<User, 'id' | 'followers' | 'following'> & {
+  password?: string; // Password is required for signup
+};
+// --- End of FIX ---
+
 type AuthContextType = {
   currentUser: User | null;
-  login: (email: string, password: string) => boolean;
-  signup: (newUser: Omit<User, 'id' | 'followers' | 'following'>) => boolean;
-  logout: () => void;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (newUser: SignUpData) => Promise<boolean>; // <-- FIX: Use the new SignUpData type
+  logout: () => Promise<void>;
+  updateProfile: (userId: string, username: string, profilePictureUri?: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [loading, setLoading] = useState(true);
 
-  const login = (username: string, password: string): boolean => {
-    const foundUser = users.find(
-      (user) => user.username === username && user.password === password
-    );
-    if (foundUser) {
-      setCurrentUser(foundUser);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      console.log('onAuthStateChanged fired:', firebaseUser);
+      if (firebaseUser) {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          console.log('User doc exists:', userDoc.data());
+          setCurrentUser({ id: userDoc.id, ...userDoc.data() } as User);
+        } else {
+          console.log('User doc does not exist');
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password); // <-- FIX: Use imported signInWithEmailAndPassword
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
-  const signup = (newUser: Omit<User, 'id' | 'followers' | 'following'>): boolean => {
-    // Prevent duplicates
-    const exists = users.some(
-      (user) => user.email === newUser.email || user.username === newUser.username
-    );
-    if (exists) return false;
+  // <-- FIX: Use the simplified SignUpData type
+  const signup = async (newUser: SignUpData): Promise<boolean> => {
+    try {
+      if (!newUser.password) {
+        throw new Error("Password is required for signup.");
+      }
+      // <-- FIX: Use imported createUserWithEmailAndPassword
+      const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
+      const firebaseUser = userCredential.user;
 
-    // Create a new user entry
-    const userToAdd: User = {
-      ...newUser,
-      id: (users.length + 1).toString(),
-      followers: 0,
-      following: 0,
-    };
+      const userToAdd = {
+        name: newUser.name,
+        username: newUser.username,
+        email: newUser.email,
+        profilePicture: newUser.profilePicture,
+        matricNumber: newUser.matricNumber,
+        faculty: newUser.faculty,
+        followers: 0,
+        following: 0,
+      };
 
-    setUsers((prev) => [...prev, userToAdd]);
-    setCurrentUser(userToAdd);
-    return true;
+      await setDoc(doc(db, 'users', firebaseUser.uid), userToAdd); // <-- FIX: Use imported setDoc and doc
+      setCurrentUser({ id: firebaseUser.uid, ...userToAdd });
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
   };
 
-  const logout = () => {
-    setCurrentUser(null);
+  const logout = async () => {
+    try {
+      await signOut(auth); // <-- FIX: Use imported signOut
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const updateProfile = async (userId: string, username: string, profilePictureUri?: string): Promise<boolean> => {
+    try {
+      const userDocRef = doc(db, 'users', userId); // <-- FIX: Use imported doc
+      let updatedProfilePictureUrl = profilePictureUri;
+
+      if (profilePictureUri && profilePictureUri.startsWith('file://')) {
+        // Upload new profile picture to Firebase Storage
+        const response = await fetch(profilePictureUri);
+        const blob = await response.blob();
+        const storageRef = ref(getStorage(), `profilePictures/${userId}`);
+        const uploadTask = await uploadBytes(storageRef, blob);
+        updatedProfilePictureUrl = await getDownloadURL(uploadTask.ref);
+      }
+
+      await updateDoc(userDocRef, { // <-- FIX: Use imported updateDoc
+        username: username,
+        profilePicture: updatedProfilePictureUrl,
+      });
+
+      // Update currentUser state
+      if (currentUser && currentUser.id === userId) {
+        setCurrentUser(prev => prev ? {
+          ...prev,
+          username: username,
+          profilePicture: updatedProfilePictureUrl || prev.profilePicture,
+        } : null);
+      }
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, signup, logout }}>
-      {children}
+    <AuthContext.Provider value={{ currentUser, loading, login, signup, logout, updateProfile }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

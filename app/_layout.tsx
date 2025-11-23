@@ -1,20 +1,22 @@
 // app/_layout.tsx
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { CartProvider } from '../contexts/CartContext';
 import { ListingsProvider } from '../contexts/ListingsContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
+import { CategoryProvider } from '../contexts/CategoryContext';
+import { ChatProvider } from '../contexts/ChatContext';
+import { ActivityIndicator, View } from 'react-native';
 
 export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: '(app)',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -44,7 +46,11 @@ export default function RootLayout() {
       <ListingsProvider>
         <CartProvider>
           <NotificationProvider>
-            <RootLayoutNav />
+            <CategoryProvider>
+              <ChatProvider>
+                <RootLayoutNav />
+              </ChatProvider>
+            </CategoryProvider>
           </NotificationProvider>
         </CartProvider>
       </ListingsProvider>
@@ -53,44 +59,35 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const { currentUser, loading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (currentUser && inAuthGroup) {
+      router.replace('/');
+    } else if (!currentUser && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    }
+  }, [currentUser, loading, segments]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
-    <ThemeProvider value={DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Main Tab Navigator */}
-        <Stack.Screen name="(tabs)" />
-
-        {/* Fullscreen Pages */}
-        <Stack.Screen name="announcement" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="cart" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="apply" />
-        <Stack.Screen name="search" />
-        <Stack.Screen name="support" />
-        <Stack.Screen name="seller-profile" />
-        <Stack.Screen name="product-detail" />
-        <Stack.Screen name="product-screen" />
-        <Stack.Screen name="new-chat" />
-        <Stack.Screen name="chat/[id]" />
-
-        {/* Modal Screens */}
-        <Stack.Screen
-          name="how-to-buy"
-          options={{ presentation: 'modal' }}
-        />
-        <Stack.Screen
-          name="how-to-sell"
-          options={{ presentation: 'modal' }}
-        />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: 'modal' }}
-        />
-
-        {/* Catch-all */}
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(app)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="+not-found" />
+    </Stack>
   );
 }

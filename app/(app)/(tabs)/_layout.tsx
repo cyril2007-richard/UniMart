@@ -1,10 +1,9 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Home, MessageCircle, Plus, Search, User } from 'lucide-react-native';
-import React, { useEffect } from 'react';
-import { Platform, StyleSheet, View, useColorScheme } from 'react-native';
+import React from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import Colors from '../../constants/Colors';
-import { useAuth } from '../../contexts/AuthContext';
+import Colors from '../../../constants/Colors';
 
 function TabIcon({
   Icon,
@@ -15,8 +14,7 @@ function TabIcon({
   color: string;
   focused: boolean;
 }) {
-  const colorScheme = useColorScheme();
-  const colors = Colors.light; 
+  const colors = Colors.light;
   const styles = StyleSheet.create({
     iconContainer: {
       alignItems: 'center',
@@ -42,7 +40,6 @@ function TabIcon({
 }
 
 function AddButton({ focused }: { focused: boolean }) {
-  const colorScheme = useColorScheme();
   const colors = Colors.light;
   const styles = StyleSheet.create({
     addButtonContainer: {
@@ -84,16 +81,7 @@ function AddButton({ focused }: { focused: boolean }) {
 }
 
 export default function TabLayout() {
-  const { currentUser } = useAuth();
-  const router = useRouter();
-  const colorScheme = useColorScheme();
   const colors = Colors.light;
-
-  useEffect(() => {
-    if (!currentUser) {
-      router.replace('/login');
-    }
-  }, [currentUser]);
 
   return (
     <Tabs

@@ -13,28 +13,28 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
-import Colors from '../constants/Colors';
-import { useAuth } from '../contexts/AuthContext';
+import Colors from '../../constants/Colors';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
   const { login } = useAuth();
   const colorScheme = useColorScheme();
-  const colors = Colors.light;
+  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
-  const handleLogin = () => {
-    if (!username || !password) {
+  const handleLogin = async () => {
+    if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    const success = login(username, password);
+    const success = await login(email, password);
     if (success) {
       router.replace('/(tabs)');
     } else {
-      Alert.alert('Error', 'Invalid username or password');
+      Alert.alert('Error', 'Invalid email or password');
     }
   };
 
@@ -204,13 +204,14 @@ export default function LoginScreen() {
           <View style={styles.form}>
             <Text style={styles.welcome}>Welcome back!</Text>
 
-            <Text style={styles.label}>Username</Text>
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter username"
-              value={username}
-              onChangeText={setUsername}
+              placeholder="Enter email"
+              value={email}
+              onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
               placeholderTextColor={colors.tabIconDefault}
             />
 

@@ -1,6 +1,7 @@
 // contexts/ListingsContext.tsx
-import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { products } from '../constants/mockData'; // ← ADD THIS
+import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import { collection, getDocs, addDoc, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface Listing {
   id: string;
@@ -16,34 +17,66 @@ export interface Listing {
 
 interface ListingsContextType {
   listings: Listing[];
-  addListing: (listing: Omit<Listing, 'id'>) => void;
+  addListing: (listing: Omit<Listing, 'id'>) => Promise<void>;
+  deleteListing: (listingId: string) => Promise<void>;
+  loading: boolean;
 }
 
 const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
 
 export const ListingsProvider = ({ children }: { children: ReactNode }) => {
-  // ← CONVERT products → Listing[]
-  const initialListings: Listing[] = products.map(p => ({
-    id: p.id,
-    title: p.name,                    // ← map 'name' → 'title'
-    price: p.price,
-    description: p.description,
-    images: [p.image],                // ← wrap image in array
-    userId: p.sellerId,
-    sellerId: p.sellerId,
-    category: p.category,
-    subcategory: p.subcategory,
-  }));
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [listings, setListings] = useState<Listing[]>(initialListings);
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const listingsCollection = collection(db, 'listings');
+        const listingsSnapshot = await getDocs(listingsCollection);
+        const listingsData = listingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Listing));
+        setListings(listingsData);
+      } catch (error) {
+        console.error("Error fetching listings: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const addListing = (listing: Omit<Listing, 'id'>) => {
-    const newListing = { ...listing, id: Date.now().toString() };
-    setListings(prev => [newListing, ...prev]);
+    fetchListings();
+  }, []);
+
+  const addListing = async (listing: Omit<Listing, 'id'>) => {
+    try {
+      const docRef = await addDoc(collection(db, 'listings'), listing);
+      setListings(prev => [{ ...listing, id: docRef.id }, ...prev]);
+    } catch (error) {
+      console.error("Error adding listing: ", error);
+    }
+  };
+
+  const deleteListing = async (listingId: string) => {
+    try {
+      const listingDocRef = doc(db, 'listings', listingId);
+      // Delete reviews subcollection
+      const reviewsCollectionRef = collection(db, 'listings', listingId, 'reviews');
+      const reviewsSnapshot = await getDocs(reviewsCollectionRef);
+      const batch = writeBatch(db);
+      reviewsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+
+      // Delete the listing document
+      await deleteDoc(listingDocRef);
+
+      setListings(prev => prev.filter(listing => listing.id !== listingId));
+    } catch (error) {
+      console.error("Error deleting listing: ", error);
+    }
   };
 
   return (
-    <ListingsContext.Provider value={{ listings, addListing }}>
+    <ListingsContext.Provider value={{ listings, addListing, deleteListing, loading }}>
       {children}
     </ListingsContext.Provider>
   );
