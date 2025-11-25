@@ -1,21 +1,23 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { ChevronLeft, Phone, Send, Smile, Video } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  StyleSheet,
 } from "react-native";
 import Colors from "../../../constants/Colors";
-import { db } from "../../../firebase";
-import { doc, getDoc, collection, query, onSnapshot, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { useAuth } from "../../../contexts/AuthContext";
-import { ChevronLeft, Video, Phone, Smile, Send } from "lucide-react-native";
+import { db } from "../../../firebase";
 
 export default function ConversationScreen() {
   const { id } = useLocalSearchParams();
@@ -25,13 +27,23 @@ export default function ConversationScreen() {
   const [text, setText] = useState("");
   const { currentUser } = useAuth();
   const [otherUser, setOtherUser] = useState<any>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const theme = Colors.light;
+
+  const onEmojiSelect = (emoji: string) => {
+    setText(prevText => prevText + emoji);
+  };
+
+  const toggleEmojiPicker = () => {
+    Keyboard.dismiss();
+    setShowEmojiPicker(prev => !prev);
+  }
 
   useEffect(() => {
     if (id) {
       const chatDocRef = doc(db, 'chats', id as string);
       const messagesCollectionRef = collection(db, 'chats', id as string, 'messages');
-      const q = query(messagesCollectionRef, orderBy('createdAt'));
+      const q = query(messagesCollectionRef, orderBy('createdAt', 'asc'));
 
       const unsubscribeChat = onSnapshot(chatDocRef, async (chatDoc) => {
         if (chatDoc.exists()) {
@@ -81,8 +93,7 @@ export default function ConversationScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: theme.surface }]}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -300}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={[styles.header, { backgroundColor: theme.background }]}>
           <View style={styles.headerLeft}>
@@ -96,12 +107,6 @@ export default function ConversationScreen() {
             <Text style={[styles.userName, { color: theme.text }]}>{otherUser.name}</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity>
-                <Video size={22} color={theme.purple} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-                <Phone size={22} color={theme.purple} />
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -119,16 +124,28 @@ export default function ConversationScreen() {
               <Text style={{ color: item.senderId === currentUser?.id ? 'white' : theme.text }}>{item.text}</Text>
             </View>
           )}
-          inverted
         />
 
+        {showEmojiPicker && (
+          <View style={[styles.emojiPicker, {backgroundColor: theme.background}]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {['😀', '😂', '👍', '❤️', '🙏', '🤔', '😊', '😍', '🎉', '🔥', '💯', '😢'].map(emoji => (
+                  <TouchableOpacity key={emoji} onPress={() => onEmojiSelect(emoji)}>
+                      <Text style={styles.emoji}>{emoji}</Text>
+                  </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
-          <TouchableOpacity>
-            <Smile size={24} color={theme.secondaryText} style={styles.inputIcon} />
+          <TouchableOpacity onPress={toggleEmojiPicker}>
+            <Smile size={24} color={showEmojiPicker ? theme.purple : theme.secondaryText} style={styles.inputIcon} />
           </TouchableOpacity>
           <TextInput
             value={text}
             onChangeText={setText}
+            onFocus={() => setShowEmojiPicker(false)}
             placeholder="Message..."
             placeholderTextColor={theme.secondaryText}
             style={[styles.textInput, { backgroundColor: theme.surface, color: theme.text }]}
@@ -210,5 +227,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 10,
         marginRight: 8,
+    },
+    emojiPicker: {
+        height: 60,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#ddd',
+    },
+    emoji: {
+        fontSize: 30,
+        marginHorizontal: 8,
     },
 });

@@ -131,6 +131,11 @@ export default function AddScreen() {
     }
   }, [categories]);
 
+  const handlePriceChange = useCallback((text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setPrice(numericValue);
+  }, []);
+
   if (!currentUser) {
     return (
       <View style={[styles.center, {backgroundColor: theme.background}]}>
@@ -153,12 +158,12 @@ export default function AddScreen() {
 
         <Text style={[styles.label, {color: theme.text}]}>Price (₦)</Text>
         <TextInput
-          placeholder="150000"
+          placeholder="150,000"
           style={[styles.input, {backgroundColor: theme.surface, color: theme.text}]}
           keyboardType="numeric"
-          value={price}
-          onChangeText={t => setPrice(t.replace(/[^0-9]/g, ''))}
-          maxLength={10}
+          value={price ? Number(price).toLocaleString('en-US') : ''}
+          onChangeText={handlePriceChange}
+          maxLength={13}
         />
         <Text style={[styles.label, {color: theme.text}]}>Photos ({images.length}/{MAX_IMAGES})</Text>
         <View style={styles.imageGrid}>

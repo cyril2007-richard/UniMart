@@ -19,6 +19,7 @@ export default function HomeScreen() {
       id: 1,
       title: 'Campus Essentials Sale',
       description: 'Up to 50% off on textbooks and stationery',
+      ImageBackground: ""
     },
     {
       id: 2,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 60,
     paddingHorizontal: 24,
-    paddingBottom: 12,
+    paddingBottom: 35,
   },
   appName: {
     fontSize: 26,

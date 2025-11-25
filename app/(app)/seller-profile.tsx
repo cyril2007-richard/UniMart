@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, onSnapshot, writeBatch, increment, serverTimestamp } from 'firebase/firestore';
 import { Grid, List, ChevronLeft } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Colors from '../../constants/Colors';
+import { useAuth } from '../../contexts/AuthContext';
 import { type Listing } from '../../contexts/ListingsContext';
 import { db } from '../../firebase';
 
@@ -17,6 +18,10 @@ export default function SellerProfileScreen() {
   const theme = Colors.light;
   const [activeTab, setActiveTab] = useState('grid');
   const router = useRouter();
+  const { currentUser } = useAuth();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -24,7 +29,9 @@ export default function SellerProfileScreen() {
         const sellerDocRef = doc(db, 'users', id as string);
         const sellerDoc = await getDoc(sellerDocRef);
         if (sellerDoc.exists()) {
-          setSeller({ id: sellerDoc.id, ...sellerDoc.data() });
+          const sellerData = { id: sellerDoc.id, ...sellerDoc.data() };
+          setSeller(sellerData);
+          setFollowerCount(sellerData.followers || 0);
         }
 
         const q = query(collection(db, 'listings'), where('sellerId', '==', id));
@@ -35,6 +42,56 @@ export default function SellerProfileScreen() {
       fetchSellerData();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!currentUser || !id) return;
+    const followerDocRef = doc(db, 'users', id as string, 'followers', currentUser.id);
+    const unsubscribe = onSnapshot(followerDocRef, (doc) => {
+        setIsFollowing(doc.exists());
+    });
+    return () => unsubscribe();
+  }, [id, currentUser]);
+
+  useEffect(() => {
+    if (!currentUser || !id) return;
+    const followerDocRef = doc(db, 'users', id as string, 'followers', currentUser.id);
+    const unsubscribe = onSnapshot(followerDocRef, (doc) => {
+        setIsFollowing(doc.exists());
+    });
+    return () => unsubscribe();
+  }, [id, currentUser]);
+
+  const handleFollowToggle = async () => {
+    if (!currentUser || !seller || isLoadingFollow) return;
+    setIsLoadingFollow(true);
+
+    const batch = writeBatch(db);
+    const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', seller.id);
+    const sellerFollowersRef = doc(db, 'users', seller.id, 'followers', currentUser.id);
+    const currentUserDocRef = doc(db, 'users', currentUser.id);
+    const sellerDocRef = doc(db, 'users', seller.id);
+
+    try {
+        if (isFollowing) { // Unfollow
+            batch.delete(currentUserFollowingRef);
+            batch.delete(sellerFollowersRef);
+            batch.update(currentUserDocRef, { following: increment(-1) });
+            batch.update(sellerDocRef, { followers: increment(-1) });
+        } else { // Follow
+            batch.set(currentUserFollowingRef, { userId: seller.id, createdAt: serverTimestamp() });
+            batch.set(sellerFollowersRef, { userId: currentUser.id, createdAt: serverTimestamp() });
+            batch.update(currentUserDocRef, { following: increment(1) });
+            batch.update(sellerDocRef, { followers: increment(1) });
+        }
+        await batch.commit();
+        setFollowerCount(prev => isFollowing ? prev - 1 : prev + 1);
+        setIsFollowing(!isFollowing);
+    } catch (error) {
+        console.error("Error toggling follow: ", error);
+    } finally {
+        setIsLoadingFollow(false);
+    }
+  };
 
   if (!seller) {
     return (
@@ -65,7 +122,7 @@ export default function SellerProfileScreen() {
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Listings</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>{seller.followers}</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{followerCount}</Text>
             <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Followers</Text>
           </View>
           <View style={styles.statItem}>
@@ -80,8 +137,24 @@ export default function SellerProfileScreen() {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.primaryButton, { backgroundColor: theme.purple }]}>
-          <Text style={[styles.primaryButtonText, { color: theme.white }]}>Follow</Text>
+        <TouchableOpacity 
+            style={[
+                isFollowing ? styles.secondaryButton : styles.primaryButton, 
+                isFollowing ? { borderColor: theme.purple } : { backgroundColor: theme.purple }
+            ]} 
+            onPress={handleFollowToggle}
+            disabled={isLoadingFollow || currentUser?.id === seller.id}
+        >
+            {isLoadingFollow ? (
+                <ActivityIndicator color={isFollowing ? theme.purple : theme.white} />
+            ) : (
+                <Text style={[
+                    isFollowing ? styles.secondaryButtonText : styles.primaryButtonText, 
+                    { color: isFollowing ? theme.purple : theme.white }
+                ]}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+            )}
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryButton, { borderColor: theme.purple }]}>
           <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Message</Text>

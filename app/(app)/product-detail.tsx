@@ -8,8 +8,9 @@ import {
   Share2,
   ShoppingCart,
   Star,
+  X,
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -25,6 +26,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart, type CartItem } from '../../contexts/CartContext';
@@ -57,8 +59,20 @@ export default function ProductDetailScreen() {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [newReview, setNewReview] = useState('');
   const [newRating, setNewRating] = useState(0);
+  const [showAddedToCartMessage, setShowAddedToCartMessage] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const colorScheme = useColorScheme();
   const theme = Colors.light;
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    // Clear timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (product) {
@@ -101,6 +115,9 @@ export default function ProductDetailScreen() {
   }
 
   const handleAddToCart = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     const cartItem: Omit<CartItem, 'quantity'> = {
       id: product.id,
       name: product.title,
@@ -109,7 +126,18 @@ export default function ProductDetailScreen() {
       sellerId: product.sellerId,
     };
     addToCart(cartItem);
-    addNotification(`${product.title} added to cart!`, 'success');
+    // addNotification(`${product.title} added to cart!`, 'success');
+    setShowAddedToCartMessage(true);
+    timeoutRef.current = setTimeout(() => {
+      setShowAddedToCartMessage(false);
+    }, 3000);
+  };
+
+  const handleCancelAddedToCartMessage = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setShowAddedToCartMessage(false);
   };
 
   const handleBuyNow = async () => {
@@ -244,6 +272,16 @@ export default function ProductDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {showAddedToCartMessage && (
+        <View style={[styles.addedToCartMessage, { top: insets.top, backgroundColor: '#4CAF50' }]}>
+          <Text style={styles.addedToCartMessageText}>
+            {product.title} has been added to your cart.
+          </Text>
+          <TouchableOpacity onPress={handleCancelAddedToCartMessage}>
+            <X color="#fff" size={18} />
+          </TouchableOpacity>
+        </View>
+      )}
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ────────────────────── IMAGE CAROUSEL ────────────────────── */}
         <View style={[styles.imageContainer, { backgroundColor: theme.lightPurple }]}>
@@ -671,5 +709,22 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 10,
+  },
+  addedToCartMessage: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 1000,
+    elevation: 10,
+  },
+  addedToCartMessageText: {
+    color: '#fff',
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 10
   },
 });
