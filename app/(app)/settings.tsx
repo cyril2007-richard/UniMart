@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, LogOut, User, HelpCircle, BadgeDollarSign, Headphones, UserCircle } from 'lucide-react-native';
+import { ChevronRight, LogOut, User, HelpCircle, BadgeDollarSign, LifeBuoy, UserCircle } from 'lucide-react-native';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
@@ -54,7 +54,7 @@ export default function SettingsScreen() {
           action: () => router.push('/(app)/how-to-sell'),
         },
         {
-          icon: Headphones,
+          icon: LifeBuoy,
           name: 'Support',
           action: () => router.push('/(app)/support'),
         },

@@ -21,7 +21,6 @@ export default function SellerProfileScreen() {
   const { currentUser } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -29,7 +28,7 @@ export default function SellerProfileScreen() {
         const sellerDocRef = doc(db, 'users', id as string);
         const sellerDoc = await getDoc(sellerDocRef);
         if (sellerDoc.exists()) {
-          const sellerData = { id: sellerDoc.id, ...sellerDoc.data() };
+          const sellerData = { id: sellerDoc.id, ...sellerDoc.data() } as any;
           setSeller(sellerData);
           setFollowerCount(sellerData.followers || 0);
         }
@@ -52,18 +51,15 @@ export default function SellerProfileScreen() {
     return () => unsubscribe();
   }, [id, currentUser]);
 
-  useEffect(() => {
-    if (!currentUser || !id) return;
-    const followerDocRef = doc(db, 'users', id as string, 'followers', currentUser.id);
-    const unsubscribe = onSnapshot(followerDocRef, (doc) => {
-        setIsFollowing(doc.exists());
-    });
-    return () => unsubscribe();
-  }, [id, currentUser]);
-
   const handleFollowToggle = async () => {
-    if (!currentUser || !seller || isLoadingFollow) return;
-    setIsLoadingFollow(true);
+    if (!currentUser || !seller) return;
+
+    // Optimistic Update
+    const previousIsFollowing = isFollowing;
+    const previousFollowerCount = followerCount;
+
+    setIsFollowing(!isFollowing);
+    setFollowerCount(prev => isFollowing ? prev - 1 : prev + 1);
 
     const batch = writeBatch(db);
     const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', seller.id);
@@ -72,7 +68,7 @@ export default function SellerProfileScreen() {
     const sellerDocRef = doc(db, 'users', seller.id);
 
     try {
-        if (isFollowing) { // Unfollow
+        if (previousIsFollowing) { // Unfollow
             batch.delete(currentUserFollowingRef);
             batch.delete(sellerFollowersRef);
             batch.update(currentUserDocRef, { following: increment(-1) });
@@ -84,12 +80,12 @@ export default function SellerProfileScreen() {
             batch.update(sellerDocRef, { followers: increment(1) });
         }
         await batch.commit();
-        setFollowerCount(prev => isFollowing ? prev - 1 : prev + 1);
-        setIsFollowing(!isFollowing);
     } catch (error) {
         console.error("Error toggling follow: ", error);
-    } finally {
-        setIsLoadingFollow(false);
+        // Revert on error
+        setIsFollowing(previousIsFollowing);
+        setFollowerCount(previousFollowerCount);
+        alert("Failed to update follow status. Please try again.");
     }
   };
 
@@ -143,18 +139,14 @@ export default function SellerProfileScreen() {
                 isFollowing ? { borderColor: theme.purple } : { backgroundColor: theme.purple }
             ]} 
             onPress={handleFollowToggle}
-            disabled={isLoadingFollow || currentUser?.id === seller.id}
+            disabled={currentUser?.id === seller.id}
         >
-            {isLoadingFollow ? (
-                <ActivityIndicator color={isFollowing ? theme.purple : theme.white} />
-            ) : (
-                <Text style={[
-                    isFollowing ? styles.secondaryButtonText : styles.primaryButtonText, 
-                    { color: isFollowing ? theme.purple : theme.white }
-                ]}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                </Text>
-            )}
+            <Text style={[
+                isFollowing ? styles.secondaryButtonText : styles.primaryButtonText, 
+                { color: isFollowing ? theme.purple : theme.white }
+            ]}>
+                {isFollowing ? 'Following' : 'Follow'}
+            </Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryButton, { borderColor: theme.purple }]}>
           <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Message</Text>
@@ -292,7 +284,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: Colors.light.surface,
     marginBottom: 10,
   },
   tab: {
@@ -320,7 +312,7 @@ const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: Colors.light.background,
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,

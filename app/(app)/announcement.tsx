@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
@@ -8,10 +9,10 @@ type NotificationType = 'success' | 'error' | 'info';
 
 export default function AnnouncementScreen() {
   const { notifications, removeNotification } = useNotification();
+  const router = useRouter();
   
-  // Forced Light Mode
   const theme = Colors.light;
-  const cardBg = '#FFFFFF'; 
+  const cardBg = theme.background; 
 
   const notificationBorders = {
     success: '#27ae60', // Green
@@ -56,7 +57,7 @@ export default function AnnouncementScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => { /* navigation.goBack() */ }}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>Notifications</Text>

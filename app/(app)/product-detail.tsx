@@ -22,7 +22,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
   ActivityIndicator,
 } from 'react-native';
@@ -61,7 +60,6 @@ export default function ProductDetailScreen() {
   const [newRating, setNewRating] = useState(0);
   const [showAddedToCartMessage, setShowAddedToCartMessage] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const colorScheme = useColorScheme();
   const theme = Colors.light;
   const insets = useSafeAreaInsets();
 
@@ -355,7 +353,7 @@ export default function ProductDetailScreen() {
                 <View style={styles.sellerInfo}>
                   <Text style={[styles.sellerName, { color: theme.text }]}>{seller.name}</Text>
                   <View style={styles.sellerStats}>
-                    <Star color="#FFB800" size={14} fill="#FFB800" strokeWidth={2} />
+                    <Star color={theme.gold} size={14} fill={theme.gold} strokeWidth={2} />
                     <Text style={[styles.sellerRating, { color: theme.text }]}>{seller.rating || 0}</Text>
                     <Text style={[styles.sellerReviews, { color: theme.tabIconDefault }]}>
                       ({seller.totalReviews || 0} reviews)
@@ -413,9 +411,9 @@ export default function ProductDetailScreen() {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      color="#FFB800"
+                      color={theme.gold}
                       size={14}
-                      fill={i < review.rating ? '#FFB800' : 'none'}
+                      fill={i < review.rating ? theme.gold : 'none'}
                       strokeWidth={2}
                     />
                   ))}
@@ -478,8 +476,8 @@ export default function ProductDetailScreen() {
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity key={star} onPress={() => setNewRating(star)}>
                   <Star
-                    color={star <= newRating ? '#FFB800' : theme.tabIconDefault}
-                    fill={star <= newRating ? '#FFB800' : 'none'}
+                    color={star <= newRating ? theme.gold : theme.tabIconDefault}
+                    fill={star <= newRating ? theme.gold : 'none'}
                     size={30}
                   />
                 </TouchableOpacity>

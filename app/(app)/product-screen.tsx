@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     height: 160,
     resizeMode: 'cover',
     borderRadius: 12,
-    backgroundColor: '#eee',
+    backgroundColor: Colors.light.surface,
   },
   gridContent: { paddingVertical: 8 },
   gridName: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     height: 80,
     resizeMode: 'cover',
     borderRadius: 10,
-    backgroundColor: '#eee',
+    backgroundColor: Colors.light.surface,
   },
   listContent: {
     flex: 1,

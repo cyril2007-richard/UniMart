@@ -10,12 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Colors from '../../constants/Colors';
 import mockData from '../../constants/mockData';
 import { useListings, type Listing } from '../../contexts/ListingsContext';
 
 export default function SearchScreen() {
   const { listings } = useListings();
   const router = useRouter();
+  const theme = Colors.light;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -39,17 +41,18 @@ export default function SearchScreen() {
       onPress={() => router.push(`/product-detail?id=${item.id}`)}
       activeOpacity={0.7}
     >
-      <Text style={styles.listingTitle}>{item.title}</Text>
-      <Text style={styles.listingPrice}>₦{item.price.toLocaleString()}</Text>
+      <Text style={[styles.listingTitle, { color: theme.text }]}>{item.title}</Text>
+      <Text style={[styles.listingPrice, { color: theme.secondaryText }]}>₦{item.price.toLocaleString()}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Search Input */}
       <TextInput
-        style={styles.searchInput}
+        style={[styles.searchInput, { borderColor: theme.tabIconDefault, color: theme.text }]}
         placeholder="Search products..."
+        placeholderTextColor={theme.tabIconDefault}
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoFocus
@@ -65,14 +68,14 @@ export default function SearchScreen() {
         <TouchableOpacity
           style={[
             styles.categoryButton,
-            selectedCategory === 'all' && styles.categoryButtonActive,
+            selectedCategory === 'all' ? { backgroundColor: theme.purple } : { backgroundColor: theme.surface },
           ]}
           onPress={() => setSelectedCategory('all')}
         >
           <Text
             style={[
               styles.categoryText,
-              selectedCategory === 'all' && styles.categoryTextActive,
+              selectedCategory === 'all' ? { color: theme.white, fontWeight: '600' } : { color: theme.secondaryText },
             ]}
           >
             All
@@ -83,14 +86,14 @@ export default function SearchScreen() {
             key={cat.id}
             style={[
               styles.categoryButton,
-              selectedCategory === cat.id && styles.categoryButtonActive,
+              selectedCategory === cat.id ? { backgroundColor: theme.purple } : { backgroundColor: theme.surface },
             ]}
             onPress={() => setSelectedCategory(cat.id)}
           >
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === cat.id && styles.categoryTextActive,
+                selectedCategory === cat.id ? { color: theme.white, fontWeight: '600' } : { color: theme.secondaryText },
               ]}
             >
               {cat.name}
@@ -106,7 +109,7 @@ export default function SearchScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.resultsList}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No products found</Text>
+          <Text style={[styles.emptyText, { color: theme.secondaryText }]}>No products found</Text>
         }
       />
     </View>
@@ -118,12 +121,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-    backgroundColor: '#fff',
   },
   searchInput: {
     height: 48,
     borderBottomWidth: 1,
-    borderColor: '#ccc',
     marginBottom: 16,
     fontSize: 16,
     paddingHorizontal: 12,
@@ -138,18 +139,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     marginHorizontal: 6,
-    backgroundColor: '#f5f5f5',
-  },
-  categoryButtonActive: {
-    backgroundColor: '#000',
   },
   categoryText: {
     fontSize: 14,
-    color: '#555',
-  },
-  categoryTextActive: {
-    color: '#fff',
-    fontWeight: '600',
   },
   resultsList: {
     paddingBottom: 20,
@@ -157,21 +149,18 @@ const styles = StyleSheet.create({
   listingItem: {
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderColor: Colors.light.surface,
   },
   listingTitle: {
     fontSize: 16,
-    color: '#000',
     marginBottom: 4,
   },
   listingPrice: {
     fontSize: 14,
-    color: '#555',
   },
   emptyText: {
     marginTop: 30,
     textAlign: 'center',
-    color: '#999',
     fontSize: 16,
   },
 });

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { Book, Lock, Mail, Phone, User, UserCircle } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,7 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
@@ -29,8 +29,7 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signup } = useAuth();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const theme = Colors.light;
 
   const updateFormData = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -86,110 +85,9 @@ export default function SignupScreen() {
     }
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    scrollContent: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      paddingHorizontal: 32,
-      paddingVertical: 40,
-    },
-
-    // Header
-    header: {
-      alignItems: 'center',
-      marginBottom: 40,
-    },
-    logo: {
-      fontSize: 36,
-      fontWeight: 'bold',
-      color: colors.tint,
-      letterSpacing: 1,
-    },
-    tagline: {
-      fontSize: 14,
-      color: colors.text,
-      marginTop: 6,
-      fontStyle: 'italic',
-    },
-
-    // Form
-    form: {
-      backgroundColor: colors.background,
-      padding: 24,
-      borderWidth: 1,
-      borderColor: colors.tabIconDefault,
-    },
-    title: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: colors.tint,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-
-    // Input Fields
-    field: {
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 14,
-      color: colors.text,
-      marginBottom: 6,
-      fontWeight: '600',
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.tabIconDefault,
-      backgroundColor: colors.background,
-      padding: 12,
-      fontSize: 15,
-      color: colors.text,
-    },
-
-    // Continue Button
-    continueBtn: {
-      backgroundColor: 'transparent',
-      padding: 14,
-      alignItems: 'center',
-      marginTop: 10,
-      marginBottom: 20,
-      borderWidth: 1,
-      borderColor: colors.tint,
-      flexDirection: 'row',
-      justifyContent: 'center',
-    },
-    continueText: {
-      color: colors.tint,
-      fontWeight: 'bold',
-      fontSize: 16,
-      letterSpacing: 1,
-    },
-
-    // Login Link
-    loginLink: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 10,
-    },
-    loginText: {
-      fontSize: 14,
-      color: colors.text,
-    },
-    loginLinkText: {
-      fontSize: 14,
-      color: colors.tint,
-      fontWeight: 'bold',
-      textDecorationLine: 'underline',
-    },
-  });
-
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -197,53 +95,204 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* === NOSTALGIC HEADER === */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>UniMarket</Text>
-          <Text style={styles.tagline}>Shop Smart. Sell Fast.</Text>
+        {/* Header Section */}
+        <View style={styles.headerContainer}>
+          <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: theme.secondaryText }]}>
+            Join UniMart to start buying and selling
+          </Text>
         </View>
 
-        <View style={styles.form}>
-          <Text style={styles.title}>Create your account</Text>
+        {/* Form Section */}
+        <View style={styles.formContainer}>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+            <User size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Full Name"
+              placeholderTextColor={theme.tabIconDefault}
+              value={formData.name}
+              onChangeText={(text) => updateFormData('name', text)}
+            />
+          </View>
 
-          {[
-            { placeholder: 'Email', key: 'email', keyboard: 'email-address' },
-            { placeholder: 'Full Name', key: 'name' },
-            { placeholder: 'Username', key: 'username' },
-            { placeholder: 'Password', key: 'password', secure: true },
-            { placeholder: 'Matric Number', key: 'matricNumber' },
-            { placeholder: 'Faculty', key: 'faculty' },
-            { placeholder: 'Phone Number', key: 'phoneNumber', keyboard: 'phone-pad' },
-          ].map((field) => (
-            <View key={field.key} style={styles.field}>
-              <Text style={styles.label}>{field.placeholder}</Text>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+            <UserCircle size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Username"
+              placeholderTextColor={theme.tabIconDefault}
+              value={formData.username}
+              onChangeText={(text) => updateFormData('username', text)}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+            <Mail size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Email Address"
+              placeholderTextColor={theme.tabIconDefault}
+              value={formData.email}
+              onChangeText={(text) => updateFormData('email', text)}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
+
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+            <Phone size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Phone Number"
+              placeholderTextColor={theme.tabIconDefault}
+              value={formData.phoneNumber}
+              onChangeText={(text) => updateFormData('phoneNumber', text)}
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={[styles.inputWrapper, styles.halfInput, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
               <TextInput
-                style={styles.input}
-                value={(formData as any)[field.key]}
-                onChangeText={(text) => updateFormData(field.key, text)}
-                keyboardType={field.keyboard === 'email-address' ? 'email-address' : field.keyboard === 'phone-pad' ? 'phone-pad' : 'default'}
-                secureTextEntry={field.secure || false}
-                autoCapitalize="none"
-                placeholderTextColor={colors.tabIconDefault}
+                style={[styles.input, { color: theme.text }]}
+                placeholder="Matric No."
+                placeholderTextColor={theme.tabIconDefault}
+                value={formData.matricNumber}
+                onChangeText={(text) => updateFormData('matricNumber', text)}
               />
             </View>
-          ))}
-
-          <TouchableOpacity style={[styles.continueBtn, { opacity: loading ? 0.5 : 1 }]} onPress={handleSignup} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color={colors.tint} style={{ marginRight: 10 }} />
-            ) : null}
-            <Text style={styles.continueText}>Sign Up</Text>
-          </TouchableOpacity>
-
-          <View style={styles.loginLink}>
-            <Text style={styles.loginText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={styles.loginLinkText}> Log in</Text>
-            </TouchableOpacity>
+            <View style={[styles.inputWrapper, styles.halfInput, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+              <TextInput
+                style={[styles.input, { color: theme.text }]}
+                placeholder="Faculty"
+                placeholderTextColor={theme.tabIconDefault}
+                value={formData.faculty}
+                onChangeText={(text) => updateFormData('faculty', text)}
+              />
+            </View>
           </View>
+
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+            <Lock size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Password"
+              placeholderTextColor={theme.tabIconDefault}
+              value={formData.password}
+              onChangeText={(text) => updateFormData('password', text)}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.signUpButton, { backgroundColor: theme.purple }, loading && styles.disabledButton]}
+            onPress={handleSignup}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.signUpButtonText}>Create Account</Text>
+            )}
+          </TouchableOpacity>
         </View>
+
+        {/* Footer */}
+        <View style={styles.footerContainer}>
+          <Text style={[styles.footerText, { color: theme.secondaryText }]}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/login')}>
+            <Text style={[styles.loginText, { color: theme.purple }]}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ height: 20 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+    paddingTop: 60,
+  },
+  headerContainer: {
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  signUpButton: {
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  signUpButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+  },
+  loginText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});

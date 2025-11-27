@@ -18,6 +18,7 @@ export default function SupportScreen() {
   const router = useRouter();
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
+  const theme = Colors.light;
 
   const sendMessage = () => {
     if (!text.trim()) return;
@@ -31,7 +32,7 @@ export default function SupportScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: "#f7f7f7" }}
+        style={{ flex: 1, backgroundColor: theme.surface }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Custom Header */}
@@ -43,9 +44,9 @@ export default function SupportScreen() {
             paddingTop: StatusBar.currentHeight || 40,
             paddingBottom: 10,
             paddingHorizontal: 15,
-            backgroundColor: "#fff",
+            backgroundColor: theme.background,
             borderBottomWidth: 1,
-            borderColor: "#eee",
+            borderColor: theme.surface,
             elevation: 3,
           }}
         >
@@ -54,12 +55,12 @@ export default function SupportScreen() {
               <Ionicons
                 name="arrow-back"
                 size={24}
-                color={Colors.light.purple}
+                color={theme.purple}
                 style={{ marginRight: 5 }}
               />
             </TouchableOpacity>
             <View>
-              <Text style={{ fontWeight: "600", fontSize: 16 }}>Customer Support</Text>
+              <Text style={{ fontWeight: "600", fontSize: 16, color: theme.text }}>Customer Support</Text>
             </View>
           </View>
         </View>
@@ -73,7 +74,7 @@ export default function SupportScreen() {
             <View
               style={{
                 alignSelf: item.sender === "You" ? "flex-end" : "flex-start",
-                backgroundColor: item.sender === "You" ? Colors.light.purple : "#fff",
+                backgroundColor: item.sender === "You" ? theme.purple : theme.background,
                 padding: 10,
                 marginVertical: 4,
                 marginHorizontal: 10,
@@ -84,7 +85,7 @@ export default function SupportScreen() {
                 shadowRadius: 2,
               }}
             >
-              <Text style={{ color: item.sender === "You" ? "#fff" : "#000" }}>{item.text}</Text>
+              <Text style={{ color: item.sender === "You" ? theme.white : theme.text }}>{item.text}</Text>
             </View>
           )}
         />
@@ -94,27 +95,29 @@ export default function SupportScreen() {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "#fff",
+            backgroundColor: theme.background,
             padding: 10,
             borderTopWidth: 1,
-            borderColor: "#eee",
+            borderColor: theme.surface,
           }}
         >
           <TextInput
             value={text}
             onChangeText={setText}
             placeholder="Message..."
+            placeholderTextColor={theme.tabIconDefault}
             style={{
               flex: 1,
-              backgroundColor: "#f2f2f2",
+              backgroundColor: theme.surface,
               borderRadius: 20,
               paddingHorizontal: 15,
               paddingVertical: 8,
               marginRight: 8,
+              color: theme.text,
             }}
           />
           <TouchableOpacity onPress={sendMessage}>
-            <Ionicons name="send" size={22} color={Colors.light.purple} />
+            <Ionicons name="send" size={22} color={theme.purple} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

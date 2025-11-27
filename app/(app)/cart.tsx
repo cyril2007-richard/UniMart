@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: '#eee',
+    backgroundColor: Colors.light.surface,
   },
   itemDetails: {
     flex: 1,

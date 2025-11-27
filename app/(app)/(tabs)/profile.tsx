@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#eee',
+    backgroundColor: Colors.light.surface,
   },
   cameraIconOverlay: {
     position: 'absolute',
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   gridImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#eee',
+    backgroundColor: Colors.light.surface,
   },
   deleteButton: {
     position: 'absolute',
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 8,
     marginRight: 16,
-    backgroundColor: '#eee',
+    backgroundColor: Colors.light.surface,
   },
   listItemDetails: {
     flex: 1,

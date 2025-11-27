@@ -1,14 +1,13 @@
 // src/screens/ShopScreen.tsx
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   FlatList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
   ActivityIndicator,
 } from "react-native";
@@ -16,26 +15,49 @@ import Colors from "../../../constants/Colors";
 import { useCategories } from "../../../contexts/CategoryContext";
 
 export default function ShopScreen() {
-  const colorScheme = useColorScheme();
   const theme = Colors.light;
   const router = useRouter();
   const { categories, loading } = useCategories();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (categories.length > 0) {
+    if (categories.length > 0 && !selectedCategory) {
       setSelectedCategory(categories[0].id);
     }
   }, [categories]);
 
-  const currentCategory = categories.find((c) => c.id === selectedCategory);
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery) return categories;
+    const lowerQuery = searchQuery.toLowerCase();
+    return categories.filter(cat => 
+      cat.name.toLowerCase().includes(lowerQuery) || 
+      cat.subcategories.some(sub => sub.toLowerCase().includes(lowerQuery))
+    );
+  }, [categories, searchQuery]);
+
+  useEffect(() => {
+    if (filteredCategories.length > 0) {
+        // If the currently selected category is no longer in the filtered list, select the first one from the filtered list
+        const exists = filteredCategories.find(c => c.id === selectedCategory);
+        if (!exists) {
+            setSelectedCategory(filteredCategories[0].id);
+        }
+    }
+  }, [filteredCategories, selectedCategory]);
+
+  const currentCategory = filteredCategories.find((c) => c.id === selectedCategory);
+  // Filter displayed subcategories based on search query as well
+  const displaySubcategories = currentCategory 
+    ? currentCategory.subcategories.filter(sub => !searchQuery || sub.toLowerCase().includes(searchQuery.toLowerCase()) || currentCategory.name.toLowerCase().includes(searchQuery.toLowerCase())) 
+    : [];
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
+        <ActivityIndicator size="large" color={theme.purple} />
       </View>
     );
   }
@@ -48,22 +70,20 @@ export default function ShopScreen() {
           style={[
             styles.searchWrapper,
             {
-              backgroundColor: "#fff",
-              borderColor: isFocused ? theme.purple : "#ddd",
+              backgroundColor: theme.background,
+              borderColor: isFocused ? theme.purple : theme.tabIconDefault,
               borderWidth: 1.5,
             },
           ]}
         >
-          <TouchableOpacity>
-            <Feather name="camera" size={20} color={theme.tint} style={styles.iconLeft} />
-          </TouchableOpacity>
-
           <TextInput
-            placeholder="Search for items..."
-            placeholderTextColor="#888"
+            placeholder="Search categories..."
+            placeholderTextColor={theme.tabIconDefault}
             style={[styles.searchInput, { color: theme.text }]}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
 
           <TouchableOpacity>
@@ -76,14 +96,14 @@ export default function ShopScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.surface }]} />
 
       {/* 🏬 Shop Layout */}
       <View style={styles.shopContainer}>
         {/* Sidebar Categories */}
-        <View style={[styles.sidebar, { backgroundColor: theme.white }]}>
+        <View style={[styles.sidebar, { backgroundColor: theme.background, borderRightColor: theme.surface }]}>
           <FlatList
-            data={categories}
+            data={filteredCategories}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => {
@@ -94,7 +114,7 @@ export default function ShopScreen() {
                   style={[
                     styles.categoryItem,
                     {
-                      backgroundColor: isSelected ? "#f8f8f8" : "transparent", // off-white highlight
+                      backgroundColor: isSelected ? theme.surface : "transparent", // off-white highlight
                     },
                   ]}
                 >
@@ -127,7 +147,7 @@ export default function ShopScreen() {
           </Text>
 
           <FlatList
-            data={currentCategory?.subcategories || []}
+            data={displaySubcategories}
             keyExtractor={(item, index) => `${selectedCategory}-${index}`}
             numColumns={3}
             columnWrapperStyle={{ justifyContent: "space-between" }}
@@ -135,7 +155,7 @@ export default function ShopScreen() {
               <TouchableOpacity 
                 style={styles.subcategoryCard}
                 onPress={() => router.push(`/product-screen?categoryId=${selectedCategory}&subcategory=${encodeURIComponent(item)}`)}>
-                <View style={styles.placeholderBox} />
+                <View style={[styles.placeholderBox, { backgroundColor: theme.background, borderColor: theme.surface }]} />
                 <Text style={[styles.subcategoryText, { color: theme.text }]}>{item}</Text>
               </TouchableOpacity>
             )}
@@ -163,9 +183,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 8,
     height: 40,
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderWidth: 1.5,
   },
   searchInput: {
     flex: 1,
@@ -182,7 +199,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#ffffffff",
     marginVertical: 10,
   },
   shopContainer: {
@@ -192,7 +208,6 @@ const styles = StyleSheet.create({
   sidebar: {
     width: "23%",
     borderRightWidth: 1,
-    borderRightColor: "#eee",
     paddingVertical: 10,
   },
   categoryItem: {
@@ -214,10 +229,8 @@ const styles = StyleSheet.create({
   placeholderBox: {
     width: 70,
     height: 70,
-    backgroundColor: "#FFFFFF",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#eee",
     marginBottom: 6,
   },
   subcategoryText: {

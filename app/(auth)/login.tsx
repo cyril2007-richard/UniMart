@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,18 +13,19 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
+import CustomAlert from '../../components/CustomAlert';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const theme = Colors.light;
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -34,159 +37,15 @@ export default function LoginScreen() {
     if (success) {
       router.replace('/(tabs)');
     } else {
-      Alert.alert('Error', 'Invalid email or password');
+      setAlertVisible(true);
     }
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    scrollContent: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      paddingHorizontal: 32,
-      paddingVertical: 40,
-    },
-
-    // Logo
-    logoContainer: {
-      alignItems: 'center',
-      marginBottom: 40,
-    },
-    logoText: {
-      fontSize: 36,
-      fontWeight: 'bold',
-      color: colors.tint,
-      letterSpacing: 1,
-    },
-    tagline: {
-      fontSize: 14,
-      color: colors.text,
-      marginTop: 6,
-      fontStyle: 'italic',
-    },
-
-    // Form
-    form: {
-      backgroundColor: colors.background,
-      padding: 24,
-      borderWidth: 1,
-      borderColor: colors.tabIconDefault,
-    },
-    welcome: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: colors.tint,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-
-    label: {
-      fontSize: 14,
-      color: colors.text,
-      marginBottom: 6,
-      fontWeight: '600',
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.tabIconDefault,
-      backgroundColor: colors.background,
-      padding: 12,
-      fontSize: 15,
-      marginBottom: 16,
-      color: colors.text,
-    },
-
-    forgot: {
-      alignSelf: 'flex-end',
-      marginBottom: 20,
-    },
-    forgotText: {
-      color: colors.tint,
-      fontSize: 13,
-      textDecorationLine: 'underline',
-    },
-
-    // Sign In Button
-    signInBtn: {
-      backgroundColor: 'transparent',
-      padding: 14,
-      alignItems: 'center',
-      marginBottom: 20,
-      borderWidth: 1,
-      borderColor: colors.tint,
-    },
-    signInText: {
-      color: colors.tint,
-      fontWeight: 'bold',
-      fontSize: 16,
-      letterSpacing: 1,
-    },
-
-    // Divider
-    divider: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginVertical: 20,
-    },
-    line: {
-      flex: 1,
-      height: 1,
-      backgroundColor: colors.tabIconDefault,
-    },
-    or: {
-      marginHorizontal: 12,
-      color: colors.text,
-      fontSize: 13,
-    },
-
-    // Google Button
-    googleBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: colors.tabIconDefault,
-      padding: 12,
-      backgroundColor: 'transparent',
-    },
-    googleG: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#4285F4',
-      marginRight: 10,
-    },
-    googleText: {
-      fontSize: 15,
-      color: colors.text,
-      fontWeight: '600',
-    },
-
-    // Sign Up
-    signup: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 30,
-    },
-    signupText: {
-      fontSize: 14,
-      color: colors.text,
-    },
-    signupLink: {
-      fontSize: 14,
-      color: colors.tint,
-      fontWeight: 'bold',
-      textDecorationLine: 'underline',
-    },
-  });
-
   return (
     <>
-      <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={theme.background} />
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
@@ -194,70 +53,221 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* === NOSTALGIC LOGO === */}
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>UniMarket</Text>
-            <Text style={styles.tagline}>Your campus marketplace since 2025</Text>
+          {/* Header Section */}
+          <View style={styles.headerContainer}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.lightPurple }]}>
+                <User size={40} color={theme.purple} strokeWidth={1.5} />
+            </View>
+            <Text style={[styles.welcomeText, { color: theme.text }]}>Welcome Back!</Text>
+            <Text style={[styles.subtitleText, { color: theme.secondaryText }]}>
+              Sign in to continue to UniMart
+            </Text>
           </View>
 
-          {/* === LOGIN FORM === */}
-          <View style={styles.form}>
-            <Text style={styles.welcome}>Welcome back!</Text>
-
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              placeholderTextColor={colors.tabIconDefault}
-            />
-
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              placeholderTextColor={colors.tabIconDefault}
-            />
-
-            <TouchableOpacity style={styles.forgot}>
-              <Text style={styles.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
-
-            {/* === CLASSIC SIGN IN BUTTON === */}
-            <TouchableOpacity style={styles.signInBtn} onPress={handleLogin}>
-              <Text style={styles.signInText}>Sign In</Text>
-            </TouchableOpacity>
-
-            {/* === DIVIDER === */}
-            <View style={styles.divider}>
-              <View style={styles.line} />
-              <Text style={styles.or}>or continue with</Text>
-              <View style={styles.line} />
+          {/* Form Section */}
+          <View style={styles.formContainer}>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+              <Mail size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: theme.text }]}
+                placeholder="Email Address"
+                placeholderTextColor={theme.tabIconDefault}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
             </View>
 
-            {/* === RETRO GOOGLE BUTTON === */}
-            <TouchableOpacity style={styles.googleBtn}>
-              <Text style={styles.googleG}>G</Text>
-              <Text style={styles.googleText}>Sign in with Google</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
+              <Lock size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: theme.text }]}
+                placeholder="Password"
+                placeholderTextColor={theme.tabIconDefault}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                {showPassword ? (
+                  <EyeOff size={20} color={theme.tabIconDefault} />
+                ) : (
+                  <Eye size={20} color={theme.tabIconDefault} />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.forgotPassword}>
+              <Text style={[styles.forgotPasswordText, { color: theme.purple }]}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.signInButton, { backgroundColor: theme.purple }]}
+              onPress={handleLogin}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={[styles.dividerLine, { backgroundColor: theme.surface }]} />
+              <Text style={[styles.dividerText, { color: theme.secondaryText }]}>OR</Text>
+              <View style={[styles.dividerLine, { backgroundColor: theme.surface }]} />
+            </View>
+
+            {/* Social Login */}
+            <TouchableOpacity
+              style={[styles.googleButton, { borderColor: theme.surface, backgroundColor: theme.background }]}
+              activeOpacity={0.7}
+            >
+              {/* Placeholder for Google Icon - effectively just a colored G for now */}
+              <Text style={styles.googleIcon}>G</Text>
+              <Text style={[styles.googleButtonText, { color: theme.text }]}>Sign in with Google</Text>
             </TouchableOpacity>
           </View>
 
-          {/* === SIGN UP LINK === */}
-          <View style={styles.signup}>
-            <Text style={styles.signupText}>New here? </Text>
+          {/* Footer */}
+          <View style={styles.footerContainer}>
+            <Text style={[styles.footerText, { color: theme.secondaryText }]}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/signup')}>
-              <Text style={styles.signupLink}>Create an account</Text>
+              <Text style={[styles.signupText, { color: theme.purple }]}>Sign Up</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CustomAlert
+        visible={alertVisible}
+        title="Login Failed"
+        message="Invalid email or password. Please try again."
+        onCancel={() => setAlertVisible(false)}
+        onConfirm={() => setAlertVisible(false)}
+      />
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtitleText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  formContainer: {
+    width: '100%',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  signInButton: {
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    marginBottom: 24,
+  },
+  signInButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  googleIcon: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4285F4',
+    marginRight: 12,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+  },
+  signupText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});
