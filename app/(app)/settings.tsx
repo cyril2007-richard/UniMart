@@ -1,9 +1,17 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, LogOut, User, HelpCircle, BadgeDollarSign, LifeBuoy, UserCircle, LogIn } from 'lucide-react-native';
+import { ChevronRight, LogOut, User, HelpCircle, BadgeDollarSign, LifeBuoy, UserCircle, LogIn, LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
+
+interface MenuItem {
+  icon: LucideIcon;
+  name: string;
+  action: () => void;
+  isDestructive?: boolean;
+  color?: string;
+}
 
 export default function SettingsScreen() {
   const { currentUser, logout } = useAuth();
@@ -23,7 +31,7 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const accountItems = currentUser ? [
+  const accountItems: MenuItem[] = currentUser ? [
     {
       icon: User,
       name: 'View Profile',
@@ -67,7 +75,7 @@ export default function SettingsScreen() {
           name: 'Support',
           action: () => router.push('/(app)/support'),
         },
-      ],
+      ] as MenuItem[],
     },
   ];
 
