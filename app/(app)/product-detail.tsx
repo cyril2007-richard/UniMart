@@ -144,17 +144,19 @@ export default function ProductDetailScreen() {
       return;
     }
 
-    await addNotification(
-      `You have agreed to pay ₦${product.price.toLocaleString()} for ${product.title}.`,
-      'info'
-    );
+    const itemToBuy = {
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      image: product.images[0],
+      quantity: 1,
+      sellerId: product.sellerId
+    };
 
-    addNotification(
-      `Your purchase request has been sent to the seller.`,
-      'success'
-    );
-
-    router.push('/');
+    router.push({
+      pathname: '/checkout',
+      params: { buyNowItem: JSON.stringify(itemToBuy) }
+    });
   };
 
   const handleMessageSeller = async () => {

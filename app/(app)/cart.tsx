@@ -1,17 +1,28 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react-native';
-import React from 'react';
+import { ArrowLeft, CheckSquare, Minus, Plus, ShoppingCart, Square, Trash2 } from 'lucide-react-native';
+import React, { useMemo } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useCart } from '../../contexts/CartContext';
 
 export default function CartScreen() {
-  const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal, toggleSelection, toggleAllSelection } = useCart();
   const router = useRouter();
   const theme = Colors.light;
 
+  const allSelected = useMemo(() => cartItems.length > 0 && cartItems.every(item => item.selected), [cartItems]);
+  const selectedCount = cartItems.filter(item => item.selected).length;
+
   const renderCartItem = ({ item, index }: { item: any; index: number }) => (
     <View style={[styles.cartItem, { borderTopWidth: index === 0 ? 0 : 1, borderColor: theme.surface }]}>
+      <TouchableOpacity onPress={() => toggleSelection(item.id)} style={styles.checkboxContainer}>
+        {item.selected ? (
+          <CheckSquare size={22} color={theme.purple} />
+        ) : (
+          <Square size={22} color={theme.tabIconDefault} />
+        )}
+      </TouchableOpacity>
+
       <Image source={{ uri: item.image }} style={styles.productImage} />
       <View style={styles.itemDetails}>
         <Text style={[styles.productName, { color: theme.text }]} numberOfLines={2}>{item.name}</Text>
@@ -39,7 +50,15 @@ export default function CartScreen() {
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>Cart</Text>
-        <View style={{ width: 24 }} />
+        {cartItems.length > 0 ? (
+            <TouchableOpacity onPress={() => toggleAllSelection(!allSelected)}>
+                <Text style={{ color: theme.purple, fontWeight: '600', fontSize: 16 }}>
+                    {allSelected ? 'Deselect All' : 'Select All'}
+                </Text>
+            </TouchableOpacity>
+        ) : (
+            <View style={{ width: 24 }} />
+        )}
       </View>
 
       {cartItems.length === 0 ? (
@@ -64,8 +83,17 @@ export default function CartScreen() {
               <Text style={[styles.totalText, { color: theme.secondaryText }]}>Total</Text>
               <Text style={[styles.totalAmount, { color: theme.text }]}>₦{getCartTotal().toLocaleString()}</Text>
             </View>
-            <TouchableOpacity style={[styles.checkoutButton, { backgroundColor: theme.purple }]}>
-              <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+            <TouchableOpacity 
+              style={[
+                styles.checkoutButton, 
+                { backgroundColor: selectedCount > 0 ? theme.purple : theme.tabIconDefault }
+              ]}
+              disabled={selectedCount === 0}
+              onPress={() => router.push('/checkout')}
+            >
+              <Text style={styles.checkoutButtonText}>
+                Checkout ({selectedCount})
+              </Text>
             </TouchableOpacity>
           </View>
         </>
@@ -85,6 +113,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 16,
+  },
+  checkboxContainer: {
+    marginRight: 12,
+    justifyContent: 'center',
   },
   backButton: {
     padding: 4,

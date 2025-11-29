@@ -88,6 +88,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(app)" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="+not-found" />
+      <Stack.Screen name="checkout" options={{ title: 'Checkout', presentation: 'modal' }} />
+      <Stack.Screen name="payment-success" options={{ headerShown: false }} />
     </Stack>
   );
 }

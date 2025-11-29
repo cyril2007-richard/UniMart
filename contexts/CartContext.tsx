@@ -11,6 +11,7 @@ export interface CartItem {
   image: string;
   quantity: number;
   sellerId: string;
+  selected?: boolean;
 }
 
 interface CartContextType {
@@ -18,6 +19,8 @@ interface CartContextType {
   addToCart: (product: Omit<CartItem, 'quantity'>) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  toggleSelection: (productId: string) => Promise<void>;
+  toggleAllSelection: (selected: boolean) => Promise<void>;
   clearCart: () => Promise<void>;
   getCartTotal: () => number;
   loading: boolean;
@@ -37,7 +40,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const cartDocRef = doc(db, 'carts', currentUser.id);
         const cartDoc = await getDoc(cartDocRef);
         if (cartDoc.exists()) {
-          setCartItems(cartDoc.data().items || []);
+          // Ensure items have a default selected state if missing
+          const items = (cartDoc.data().items || []).map((item: CartItem) => ({
+            ...item,
+            selected: item.selected ?? true 
+          }));
+          setCartItems(items);
         } else {
           setCartItems([]);
         }
@@ -64,8 +72,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     if (existingItemIndex > -1) {
       newCartItems[existingItemIndex].quantity += 1;
+      newCartItems[existingItemIndex].selected = true; // Re-select if added again
     } else {
-      newCartItems.push({ ...product, quantity: 1 });
+      newCartItems.push({ ...product, quantity: 1, selected: true });
     }
 
     setCartItems(newCartItems);
@@ -86,13 +95,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     await updateCartInFirestore(newCartItems);
   };
 
+  const toggleSelection = async (productId: string) => {
+    const newCartItems = cartItems.map((item) =>
+      item.id === productId ? { ...item, selected: !item.selected } : item
+    );
+    setCartItems(newCartItems);
+    await updateCartInFirestore(newCartItems);
+  };
+
+  const toggleAllSelection = async (selected: boolean) => {
+    const newCartItems = cartItems.map((item) => ({ ...item, selected }));
+    setCartItems(newCartItems);
+    await updateCartInFirestore(newCartItems);
+  };
+
   const clearCart = async () => {
     setCartItems([]);
     await updateCartInFirestore([]);
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cartItems
+      .filter(item => item.selected)
+      .reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   return (
@@ -102,6 +127,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         addToCart,
         removeFromCart,
         updateQuantity,
+        toggleSelection,
+        toggleAllSelection,
         clearCart,
         getCartTotal,
         loading,
