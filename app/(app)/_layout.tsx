@@ -15,7 +15,6 @@ export default function AppLayout() {
         <Stack.Screen name="seller-profile" />
         <Stack.Screen name="product-detail" />
         <Stack.Screen name="product-screen" />
-        <Stack.Screen name="new-chat" />
         <Stack.Screen name="chat/[id]" />
         <Stack.Screen name="how-to-buy" options={{ presentation: 'transparentModal' }} />
         <Stack.Screen name="how-to-sell" options={{ presentation: 'transparentModal' }} />

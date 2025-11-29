@@ -1,6 +1,6 @@
 // contexts/ChatContext.tsx
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 
@@ -33,30 +33,22 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (currentUser?.id) {
-      const interactionsRef = collection(db, 'users', currentUser.id, 'interactions');
-      const unsubscribe = onSnapshot(interactionsRef, async (snapshot) => {
-        try {
-          const interactions = snapshot.docs.map(doc => doc.id);
-          const chatsData: Chat[] = [];
+      const chatsQuery = query(
+        collection(db, 'chats'),
+        where('participants', 'array-contains', currentUser.id),
+        orderBy('lastUpdatedAt', 'desc')
+      );
 
-          for (const userId of interactions) {
-            const sortedParticipants = [currentUser.id, userId].sort();
-            const q = query(
-              collection(db, 'chats'),
-              where('participants', '==', sortedParticipants)
-            );
-            const chatSnapshot = await getDocs(q);
-            if (!chatSnapshot.empty) {
-              const chatDoc = chatSnapshot.docs[0];
-              chatsData.push({ id: chatDoc.id, ...chatDoc.data() } as Chat);
-            }
-          }
-          setChats(chatsData);
-        } catch (error) {
-          console.error("Error fetching chats from interactions: ", error);
-        } finally {
-          setLoading(false);
-        }
+      const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+        const chatsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Chat));
+        setChats(chatsData);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching chats: ", error);
+        setLoading(false);
       });
 
       return () => unsubscribe();

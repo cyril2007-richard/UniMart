@@ -14,14 +14,6 @@ export default function ChatScreen() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.lightPurple} />
-      </View>
-    );
-  }
-
   const filteredChats = useMemo(() => {
     return chats.map(chat => {
       const otherUserId = chat.participants.find((uid: string) => uid !== currentUser?.id);
@@ -69,6 +61,14 @@ export default function ChatScreen() {
       </TouchableOpacity>
     );
   }, [router, theme]);
+
+  if (loading) {
+    return (
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.lightPurple} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

@@ -1,6 +1,5 @@
-// app/product-detail.tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { addDoc, collection, doc, getDoc, getDocs, limit, query, serverTimestamp, where, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, limit, query, serverTimestamp, where, setDoc, orderBy } from 'firebase/firestore';
 import {
   Heart,
   MessageCircle,
@@ -63,6 +62,7 @@ export default function ProductDetailScreen() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const theme = Colors.light;
   const insets = useSafeAreaInsets();
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   useEffect(() => {
     // Clear timeout on unmount
@@ -125,7 +125,6 @@ export default function ProductDetailScreen() {
       sellerId: product.sellerId,
     };
     addToCart(cartItem);
-    // addNotification(`${product.title} added to cart!`, 'success');
     setShowAddedToCartMessage(true);
     timeoutRef.current = setTimeout(() => {
       setShowAddedToCartMessage(false);
@@ -145,15 +144,11 @@ export default function ProductDetailScreen() {
       return;
     }
 
-    // For the buyer
     await addNotification(
       `You have agreed to pay ₦${product.price.toLocaleString()} for ${product.title}.`,
       'info'
     );
 
-    // For the seller - This would typically be handled by a Cloud Function for security reasons.
-    // A user cannot directly write to another user's notification collection.
-    // For now, we will just show a success message to the buyer.
     addNotification(
       `Your purchase request has been sent to the seller.`,
       'success'
@@ -161,8 +156,6 @@ export default function ProductDetailScreen() {
 
     router.push('/');
   };
-
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const handleMessageSeller = async () => {
     if (!currentUser || !seller || isCreatingChat) {
@@ -172,69 +165,94 @@ export default function ProductDetailScreen() {
 
     setIsCreatingChat(true);
 
-    const chatsRef = collection(db, 'chats');
-    const q = query(
-      chatsRef,
-      where('participants', 'array-contains', currentUser.id)
-    );
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(
+        chatsRef,
+        where('participants', 'array-contains', currentUser.id)
+      );
 
-    const querySnapshot = await getDocs(q);
-    let existingChat: any = null;
-    querySnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.participants.includes(seller.id)) {
-        existingChat = { id: doc.id, ...data };
-      }
-    });
-
-    if (existingChat) {
-      router.push(`/chat/${existingChat.id}`);
-    } else {
-      console.log('Creating new chat with:', {
-        currentUser: {
-          id: currentUser.id,
-          name: currentUser.name,
-          avatar: currentUser.profilePicture,
-        },
-        seller: {
-          id: seller.id,
-          name: seller.name,
-          avatar: seller.profilePicture,
-        },
-      });
-      const sortedParticipants = [currentUser.id, seller.id].sort();
-      const newChatRef = await addDoc(chatsRef, {
-        participants: sortedParticipants,
-        lastMessage: '',
-        lastUpdatedAt: serverTimestamp(),
-        users: {
-          [currentUser.id]: {
-            name: currentUser.name,
-            avatar: currentUser.profilePicture,
-          },
-          [seller.id]: {
-            name: seller.name,
-            avatar: seller.profilePicture,
-          }
+      const querySnapshot = await getDocs(q);
+      let existingChat: any = null;
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.participants.includes(seller.id)) {
+          existingChat = { id: doc.id, ...data };
         }
       });
 
-      // Add interaction data
-      const currentUserInteractionsRef = doc(db, 'users', currentUser.id, 'interactions', seller.id);
-      await setDoc(currentUserInteractionsRef, {
-        name: seller.name,
-        avatar: seller.profilePicture,
-      });
+      let chatId;
 
-      const sellerInteractionsRef = doc(db, 'users', seller.id, 'interactions', currentUser.id);
-      await setDoc(sellerInteractionsRef, {
-        name: currentUser.name,
-        avatar: currentUser.profilePicture,
-      });
+      if (existingChat) {
+        chatId = existingChat.id;
+      } else {
+        const sortedParticipants = [currentUser.id, seller.id].sort();
+        const newChatRef = await addDoc(chatsRef, {
+          participants: sortedParticipants,
+          lastMessage: '',
+          lastUpdatedAt: serverTimestamp(),
+          users: {
+            [currentUser.id]: {
+              name: currentUser.name,
+              avatar: currentUser.profilePicture,
+            },
+            [seller.id]: {
+              name: seller.name,
+              avatar: seller.profilePicture,
+            }
+          }
+        });
 
-      router.push(`/chat/${newChatRef.id}`);
+        // Add interaction data
+        const currentUserInteractionsRef = doc(db, 'users', currentUser.id, 'interactions', seller.id);
+        await setDoc(currentUserInteractionsRef, {
+          name: seller.name,
+          avatar: seller.profilePicture,
+          chatId: newChatRef.id,
+        });
+
+        const sellerInteractionsRef = doc(db, 'users', seller.id, 'interactions', currentUser.id);
+        await setDoc(sellerInteractionsRef, {
+          name: currentUser.name,
+          avatar: currentUser.profilePicture,
+          chatId: newChatRef.id,
+        });
+        
+        chatId = newChatRef.id;
+      }
+
+      // Add Product Context Message
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      const lastMsgQuery = query(messagesRef, orderBy('createdAt', 'desc'), limit(1));
+      const lastMsgSnapshot = await getDocs(lastMsgQuery);
+      
+      let shouldSendContext = true;
+      if (!lastMsgSnapshot.empty) {
+          const lastMsg = lastMsgSnapshot.docs[0].data();
+          if (lastMsg.type === 'product-context' && lastMsg.productId === product.id) {
+              shouldSendContext = false;
+          }
+      }
+
+      if (shouldSendContext) {
+          await addDoc(messagesRef, {
+              type: 'product-context',
+              productId: product.id,
+              productTitle: product.title,
+              productPrice: product.price,
+              productImage: product.images[0],
+              senderId: currentUser.id,
+              createdAt: serverTimestamp()
+          });
+      }
+
+      router.push(`/chat/${chatId}`);
+    } catch (error) {
+      console.error("Error initiating chat:", error);
+      addNotification('Failed to start chat.', 'error');
+    } finally {
+      setIsCreatingChat(false);
     }
-    setIsCreatingChat(false);
   };
 
   const handleAddReview = async () => {
@@ -290,7 +308,6 @@ export default function ProductDetailScreen() {
         </View>
       )}
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ────────────────────── IMAGE CAROUSEL ────────────────────── */}
         <View style={[styles.imageContainer, { backgroundColor: theme.lightPurple }]}>
           <FlatList
             data={product.images}
@@ -303,7 +320,6 @@ export default function ProductDetailScreen() {
             )}
           />
 
-          {/* Favourite & Share Buttons */}
           <TouchableOpacity
             style={[styles.favoriteButton, { backgroundColor: theme.background }]}
             onPress={() => setIsFavorite(!isFavorite)}
@@ -320,7 +336,6 @@ export default function ProductDetailScreen() {
             <Share2 color={theme.tabIconDefault} size={22} strokeWidth={2} />
           </TouchableOpacity>
 
-          {/* Pagination Dots */}
           {product.images.length > 1 && (
             <View style={styles.pagination}>
               {product.images.map((_, i) => (
@@ -329,10 +344,8 @@ export default function ProductDetailScreen() {
             </View>
           )}
         </View>
-        {/* ───────────────────────────────────────────────────────────── */}
 
         <View style={styles.contentContainer}>
-          {/* Product Info */}
           <View style={styles.productInfoSection}>
             <Text style={[styles.productName, { color: theme.text }]}>{product.title}</Text>
             <Text style={[styles.productPrice, { color: theme.tint }]}>
@@ -345,7 +358,6 @@ export default function ProductDetailScreen() {
             )}
           </View>
 
-          {/* Seller Card */}
           {seller && (
             <TouchableOpacity
               style={[styles.sellerCard, { backgroundColor: theme.lightPurple }]}
@@ -377,30 +389,30 @@ export default function ProductDetailScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.lightPurple }]} activeOpacity={0.7} onPress={handleCall}>
-              <Phone color={theme.text} size={20} strokeWidth={2} />
-              <Text style={[styles.actionButtonText, { color: theme.text }]}>Call</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: theme.lightPurple }]}
-              activeOpacity={0.7}
-              onPress={handleMessageSeller}
-              disabled={isCreatingChat}
-            >
-              {isCreatingChat ? (
-                <ActivityIndicator color={theme.text} />
-              ) : (
-                <>
-                  <MessageCircle color={theme.text} size={20} strokeWidth={2} />
-                  <Text style={[styles.actionButtonText, { color: theme.text }]}>Message</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+          {currentUser?.id !== product.sellerId && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.lightPurple }]} activeOpacity={0.7} onPress={handleCall}>
+                <Phone color={theme.text} size={20} strokeWidth={2} />
+                <Text style={[styles.actionButtonText, { color: theme.text }]}>Call</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: theme.lightPurple }]}
+                activeOpacity={0.7}
+                onPress={handleMessageSeller}
+                disabled={isCreatingChat}
+              >
+                {isCreatingChat ? (
+                  <ActivityIndicator color={theme.text} />
+                ) : (
+                  <>
+                    <MessageCircle color={theme.text} size={20} strokeWidth={2} />
+                    <Text style={[styles.actionButtonText, { color: theme.text }]}>Message</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
 
-          {/* Reviews */}
           <View style={styles.reviewsSection}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Reviews ({reviews.length})</Text>
@@ -432,7 +444,6 @@ export default function ProductDetailScreen() {
             ))}
           </View>
 
-          {/* More from Seller */}
           {sellerProducts.length > 0 && (
             <View style={styles.moreSection}>
               <View style={styles.sectionHeader}>
@@ -471,7 +482,6 @@ export default function ProductDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Review Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -510,7 +520,6 @@ export default function ProductDetailScreen() {
         </View>
       </Modal>
 
-      {/* Bottom Action Bar */}
       <View style={[styles.bottomBar, { backgroundColor: theme.background, borderTopColor: theme.tabIconDefault }]}>
         <TouchableOpacity style={[styles.addToCartButton, { backgroundColor: theme.tint }]} onPress={handleAddToCart}>
           <ShoppingCart color={theme.background} size={20} strokeWidth={2} />
@@ -524,12 +533,9 @@ export default function ProductDetailScreen() {
   );
 }
 
-/* ─────────────────────── STYLES ─────────────────────── */
 const styles = StyleSheet.create({
   container: { flex: 1 },
   errorText: { fontSize: 16, textAlign: 'center', marginTop: 100 },
-
-  /* ─────── IMAGE CAROUSEL ─────── */
   imageContainer: {
     position: 'relative',
   },
@@ -583,15 +589,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
-
-  /* ─────── CONTENT ─────── */
   contentContainer: { paddingHorizontal: 20, paddingTop: 20 },
   productInfoSection: { marginBottom: 24 },
   productName: { fontSize: 26, fontWeight: '700', marginBottom: 12, lineHeight: 32 },
   productPrice: { fontSize: 32, fontWeight: '800', marginBottom: 16 },
   productDescription: { fontSize: 16, lineHeight: 24 },
-
-  /* Seller Card */
   sellerCard: { padding: 18, borderRadius: 14, marginBottom: 20 },
   sellerHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   sellerAvatar: { width: 56, height: 56, borderRadius: 28, overflow: 'hidden', marginRight: 14 },
@@ -603,8 +605,6 @@ const styles = StyleSheet.create({
   sellerReviews: { fontSize: 13 },
   sellerProducts: { fontSize: 13 },
   viewProfile: { fontSize: 15, fontWeight: '600' },
-
-  /* Action Buttons */
   actionButtons: { flexDirection: 'row', gap: 12, marginBottom: 28 },
   actionButton: {
     flex: 1,
@@ -616,8 +616,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButtonText: { fontSize: 15, fontWeight: '600' },
-
-  /* Reviews */
   reviewsSection: { marginBottom: 28 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sectionTitle: { fontSize: 22, fontWeight: '700' },
@@ -628,8 +626,6 @@ const styles = StyleSheet.create({
   reviewDate: { fontSize: 13 },
   reviewRating: { flexDirection: 'row', gap: 4, marginBottom: 10 },
   reviewComment: { fontSize: 14, lineHeight: 20 },
-
-  /* More from Seller */
   moreSection: { marginBottom: 20 },
   moreProducts: { marginHorizontal: -20 },
   moreProductsContent: { paddingHorizontal: 20 },
@@ -637,8 +633,6 @@ const styles = StyleSheet.create({
   moreProductImage: { width: 130, height: 130, borderRadius: 10, marginBottom: 10 },
   moreProductName: { fontSize: 14, fontWeight: '600', marginBottom: 6, lineHeight: 18 },
   moreProductPrice: { fontSize: 16, fontWeight: '700' },
-
-  /* Bottom Bar */
   bottomBar: {
     position: 'absolute',
     bottom: 0,

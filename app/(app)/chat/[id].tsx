@@ -194,6 +194,39 @@ export default function ConversationScreen() {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.messageList}
             renderItem={({ item }) => {
+                if (item.type === 'product-context') {
+                    return (
+                        <View style={{ alignItems: 'center', marginVertical: 10 }}>
+                            <TouchableOpacity 
+                                style={{
+                                    flexDirection: 'row',
+                                    backgroundColor: theme.surface,
+                                    padding: 10,
+                                    borderRadius: 10,
+                                    width: '80%',
+                                    alignItems: 'center',
+                                    shadowColor: "#000",
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 2,
+                                    elevation: 2,
+                                }}
+                                onPress={() => router.push(`/(app)/product-detail?id=${item.productId}`)}
+                            >
+                                <Image 
+                                    source={{ uri: item.productImage }} 
+                                    style={{ width: 50, height: 50, borderRadius: 8, marginRight: 10, backgroundColor: '#eee' }} 
+                                />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 12, color: theme.secondaryText, marginBottom: 2 }}>Interested in:</Text>
+                                    <Text style={{ fontWeight: '600', color: theme.text }} numberOfLines={1}>{item.productTitle}</Text>
+                                    <Text style={{ color: theme.purple, fontWeight: '700', fontSize: 12 }}>₦{item.productPrice?.toLocaleString()}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                    );
+                }
+
                 const isMyMessage = item.senderId === currentUser?.id;
                 return (
                     <View
