@@ -1,27 +1,39 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { collection, doc, getDoc, getDocs, query, where, onSnapshot, writeBatch, increment, serverTimestamp } from 'firebase/firestore';
-import { Grid, List, ChevronLeft } from 'lucide-react-native';
+import { addDoc, collection, doc, getDoc, getDocs, increment, onSnapshot, query, serverTimestamp, setDoc, where, writeBatch } from 'firebase/firestore';
+import { ChevronLeft, Grid, List, PackageOpen, UserCheck, UserPlus } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { type Listing } from '../../contexts/ListingsContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { db } from '../../firebase';
 
 const { width } = Dimensions.get('window');
-const imageSize = (width - 40) / 3; // (padding - gaps) / numColumns
+const COLUMN_COUNT = 3;
+const GAP = 2; // Tight gap for mosaic look
+const IMAGE_SIZE = (width - ((COLUMN_COUNT - 1) * GAP)) / COLUMN_COUNT;
 
 export default function SellerProfileScreen() {
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const theme = Colors.light;
+  
+  // Data State
   const [seller, setSeller] = useState<any>(null);
   const [sellerProducts, setSellerProducts] = useState<Listing[]>([]);
-  const theme = Colors.light;
   const [activeTab, setActiveTab] = useState('grid');
-  const router = useRouter();
-  const { currentUser } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  
+  // Contexts
+  const { currentUser } = useAuth();
+  const { addNotification } = useNotification();
 
+  // --- Effects ---
   useEffect(() => {
     if (id) {
       const fetchSellerData = async () => {
@@ -51,8 +63,13 @@ export default function SellerProfileScreen() {
     return () => unsubscribe();
   }, [id, currentUser]);
 
+  // --- Handlers ---
   const handleFollowToggle = async () => {
-    if (!currentUser || !seller) return;
+    if (!currentUser) {
+        router.push('/(auth)/login');
+        return;
+    }
+    if (!seller) return;
 
     // Optimistic Update
     const previousIsFollowing = isFollowing;
@@ -62,6 +79,7 @@ export default function SellerProfileScreen() {
     setFollowerCount(prev => isFollowing ? prev - 1 : prev + 1);
 
     const batch = writeBatch(db);
+    // ... (Your existing batch logic is perfect, keeping it simplified here for brevity)
     const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', seller.id);
     const sellerFollowersRef = doc(db, 'users', seller.id, 'followers', currentUser.id);
     const currentUserDocRef = doc(db, 'users', currentUser.id);
@@ -82,269 +100,265 @@ export default function SellerProfileScreen() {
         await batch.commit();
     } catch (error) {
         console.error("Error toggling follow: ", error);
-        // Revert on error
         setIsFollowing(previousIsFollowing);
         setFollowerCount(previousFollowerCount);
-        alert("Failed to update follow status. Please try again.");
+        addNotification("Failed to update follow status", "error");
+    }
+  };
+
+  const handleMessageSeller = async () => {
+    if (!currentUser) {
+      router.push('/(auth)/login');
+      return;
+    }
+    if (!seller || isCreatingChat) return;
+
+    setIsCreatingChat(true);
+    // ... (Your existing chat logic)
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('participants', 'array-contains', currentUser.id));
+      const querySnapshot = await getDocs(q);
+      let existingChat: any = null;
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.participants.includes(seller.id)) {
+          existingChat = { id: doc.id, ...data };
+        }
+      });
+
+      if (existingChat) {
+        router.push(`/chat/${existingChat.id}`);
+      } else {
+        const sortedParticipants = [currentUser.id, seller.id].sort();
+        const newChatRef = await addDoc(chatsRef, {
+          participants: sortedParticipants,
+          lastMessage: '',
+          lastUpdatedAt: serverTimestamp(),
+          users: {
+            [currentUser.id]: { name: currentUser.name, avatar: currentUser.profilePicture },
+            [seller.id]: { name: seller.name, avatar: seller.profilePicture }
+          }
+        });
+        
+        // Add Interactions logic here (omitted for brevity, keep your original code)
+        const currentUserInteractionsRef = doc(db, 'users', currentUser.id, 'interactions', seller.id);
+        await setDoc(currentUserInteractionsRef, { name: seller.name, avatar: seller.profilePicture, chatId: newChatRef.id });
+        const sellerInteractionsRef = doc(db, 'users', seller.id, 'interactions', currentUser.id);
+        await setDoc(sellerInteractionsRef, { name: currentUser.name, avatar: currentUser.profilePicture, chatId: newChatRef.id });
+
+        router.push(`/chat/${newChatRef.id}`);
+      }
+    } catch (error) {
+      addNotification('Failed to start chat.', 'error');
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
   if (!seller) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <Text style={{ fontSize: 16, color: theme.text }}>Seller not found.</Text>
+        <ActivityIndicator size="large" color={theme.purple} />
       </View>
     );
   }
 
-  return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <ChevronLeft size={24} color={theme.text} />
+  // --- Render Components ---
+
+  const renderHeader = () => (
+    <View style={{ backgroundColor: theme.background }}>
+      {/* Navbar */}
+      <View style={[styles.navbar, { paddingTop: insets.top }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ChevronLeft size={28} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.navTitle, { color: theme.text }]}>{seller.username}</Text>
+        <View style={{width: 28}} /> 
+      </View>
+
+      <View style={styles.profileContainer}>
+        {/* Top Row: Avatar + Stats */}
+        <View style={styles.statsRow}>
+            <Image
+                source={{ uri: seller.profilePicture }}
+                style={styles.avatar}
+            />
+            
+            <View style={styles.statsData}>
+                <View style={styles.statItem}>
+                    <Text style={[styles.statNum, { color: theme.text }]}>{sellerProducts.length}</Text>
+                    <Text style={[styles.statLabel, { color: theme.secondaryText }]}>Posts</Text>
+                </View>
+                <View style={styles.statItem}>
+                    <Text style={[styles.statNum, { color: theme.text }]}>{followerCount}</Text>
+                    <Text style={[styles.statLabel, { color: theme.secondaryText }]}>Followers</Text>
+                </View>
+                <View style={styles.statItem}>
+                    <Text style={[styles.statNum, { color: theme.text }]}>{seller.following || 0}</Text>
+                    <Text style={[styles.statLabel, { color: theme.secondaryText }]}>Following</Text>
+                </View>
+            </View>
+        </View>
+
+        {/* Bio */}
+        <View style={styles.bioContainer}>
+            <Text style={[styles.realName, { color: theme.text }]}>{seller.name}</Text>
+            {/* Optional Bio Text could go here */}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+            <TouchableOpacity 
+                style={[
+                    styles.followBtn, 
+                    { backgroundColor: isFollowing ? theme.surface : theme.purple }
+                ]} 
+                onPress={handleFollowToggle}
+                disabled={currentUser?.id === seller.id}
+            >
+                {isFollowing ? (
+                    <>
+                        <Text style={[styles.btnText, { color: theme.text }]}>Following</Text>
+                        <UserCheck size={16} color={theme.text} style={{ marginLeft: 6 }} />
+                    </>
+                ) : (
+                    <>
+                        <Text style={[styles.btnText, { color: 'white' }]}>Follow</Text>
+                        <UserPlus size={16} color="white" style={{ marginLeft: 6 }} />
+                    </>
+                )}
             </TouchableOpacity>
-            <Text style={[styles.username, { color: theme.text }]}>{seller.username}</Text>
-            <View style={{width: 24}}/>
-        </View>
 
-      <View style={styles.profileSection}>
-        <Image
-          source={{ uri: seller.profilePicture }}
-          style={styles.profilePicture}
-        />
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>{sellerProducts.length}</Text>
-            <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Listings</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>{followerCount}</Text>
-            <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Followers</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>{seller.following}</Text>
-            <Text style={[styles.statLabel, { color: theme.tabIconDefault }]}>Following</Text>
-          </View>
+            <TouchableOpacity 
+                style={[styles.messageBtn, { backgroundColor: theme.surface }]}
+                onPress={handleMessageSeller}
+                disabled={isCreatingChat}
+            >
+                {isCreatingChat ? (
+                   <ActivityIndicator size="small" color={theme.text} />
+                ) : (
+                   <Text style={[styles.btnText, { color: theme.text }]}>Message</Text>
+                )}
+            </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.bioSection}>
-        <Text style={[styles.name, { color: theme.text }]}>{seller.name}</Text>
+      {/* Tabs */}
+      <View style={[styles.tabBar, { borderBottomColor: theme.surface }]}>
+        <TouchableOpacity onPress={() => setActiveTab('grid')} style={[styles.tab, activeTab === 'grid' && { borderBottomColor: theme.text }]}>
+          <Grid size={24} color={activeTab === 'grid' ? theme.text : theme.secondaryText} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActiveTab('list')} style={[styles.tab, activeTab === 'list' && { borderBottomColor: theme.text }]}>
+          <List size={24} color={activeTab === 'list' ? theme.text : theme.secondaryText} />
+        </TouchableOpacity>
       </View>
+    </View>
+  );
 
-      <View style={styles.buttonContainer}>
+  const renderItem = ({ item }: { item: any }) => {
+    const imageUrl = item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150';
+    
+    if (activeTab === 'grid') {
+      return (
         <TouchableOpacity 
-            style={[
-                isFollowing ? styles.secondaryButton : styles.primaryButton, 
-                isFollowing ? { borderColor: theme.purple } : { backgroundColor: theme.purple }
-            ]} 
-            onPress={handleFollowToggle}
-            disabled={currentUser?.id === seller.id}
+            activeOpacity={0.8}
+            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, marginBottom: GAP }} 
+            onPress={() => router.push(`/product-detail?id=${item.id}`)}
         >
-            <Text style={[
-                isFollowing ? styles.secondaryButtonText : styles.primaryButtonText, 
-                { color: isFollowing ? theme.purple : theme.white }
-            ]}>
-                {isFollowing ? 'Following' : 'Follow'}
-            </Text>
+          <Image source={{ uri: imageUrl }} style={styles.gridImage} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.secondaryButton, { borderColor: theme.purple }]}>
-          <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>Message</Text>
+      );
+    } else {
+      return (
+        <TouchableOpacity 
+            activeOpacity={0.7}
+            style={[styles.listItem, { backgroundColor: theme.surface }]} 
+            onPress={() => router.push(`/product-detail?id=${item.id}`)}
+        >
+          <Image source={{ uri: imageUrl }} style={styles.listImage} />
+          <View style={styles.listInfo}>
+            <Text numberOfLines={1} style={[styles.listTitle, { color: theme.text }]}>{item.title}</Text>
+            <Text style={[styles.listPrice, { color: theme.purple }]}>₦{item.price.toLocaleString()}</Text>
+          </View>
         </TouchableOpacity>
-      </View>
+      );
+    }
+  };
 
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity onPress={() => setActiveTab('grid')} style={[styles.tab, activeTab === 'grid' && styles.activeTab]}>
-          <Grid size={24} color={activeTab === 'grid' ? theme.purple : theme.tabIconDefault} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('list')} style={[styles.tab, activeTab === 'list' && styles.activeTab]}>
-          <List size={24} color={activeTab === 'list' ? theme.purple : theme.tabIconDefault} />
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'grid' ? (
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <StatusBar barStyle="dark-content" />
         <FlatList
+          key={activeTab} // Forces re-render on tab switch
           data={sellerProducts}
-          numColumns={3}
-          scrollEnabled={false} // Disables scrolling for the inner FlatList
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.listingItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
-              {/* --- FIX #1 --- */}
-              <Image source={{ uri: item.images[0] }} style={styles.listingImage} />
-            </TouchableOpacity>
-          )}
+          renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          columnWrapperStyle={styles.listingRow}
+          numColumns={activeTab === 'grid' ? COLUMN_COUNT : 1}
+          columnWrapperStyle={activeTab === 'grid' ? { gap: GAP } : undefined}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={activeTab === 'list' ? { paddingHorizontal: 16, paddingBottom: 40 } : { paddingBottom: 40 }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+                <PackageOpen size={48} color={theme.secondaryText} />
+                <Text style={[styles.emptyText, { color: theme.secondaryText }]}>No listings yet</Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[0]} // Optional: Keeps header slightly visible or use specific index for Tab bar if split
         />
-      ) : (
-        <FlatList
-          data={sellerProducts}
-          scrollEnabled={false} // Disables scrolling for the inner FlatList
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.listItem} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
-              {/* --- FIX #2 --- */}
-              <Image source={{ uri: item.images[0] }} style={styles.listImage} />
-              <View style={styles.listItemDetails}>
-                {/* --- FIX #3 --- */}
-                <Text style={styles.listItemTitle}>{item.title}</Text>
-                <Text style={styles.listItemPrice}>₦{item.price}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.id}
-        />
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
-
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    paddingTop: 60,
+  container: { flex: 1 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  
+  // Navigation
+  navbar: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  username: {
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  profilePicture: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  statsContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    fontSize: 14,
-    marginTop: 5,
-  },
-  bioSection: {
-    marginBottom: 20,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 20,
-  },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    flex: 1,
-    borderWidth: 1.5,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.surface,
-    marginBottom: 10,
-  },
-  tab: {
-    paddingVertical: 10,
-    flex: 1,
-    alignItems: 'center',
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    // Note: You might want to add borderBottomColor: theme.purple here
-  },
-  listingRow: {
-    justifyContent: 'space-between',
-  },
-  listingItem: {
-    width: imageSize,
-    height: imageSize,
-    marginBottom: 10,
-  },
-  listingImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.light.background,
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  listImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  listItemDetails: {
-    flex: 1,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  listItemPrice: {
-    fontSize: 14,
-    color: Colors.light.purple,
-    marginTop: 5,
-  },
-  listViewContainer: {
-    alignItems: 'center',
-    paddingVertical: 50,
-  },
-  backButton: {
-      padding: 5,
-  }
+  backButton: { padding: 4 },
+  navTitle: { fontSize: 16, fontWeight: '700' },
+
+  // Profile Section
+  profileContainer: { paddingHorizontal: 16, paddingBottom: 16 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  avatar: { width: 86, height: 86, borderRadius: 43, marginRight: 20 },
+  statsData: { flex: 1, flexDirection: 'row', justifyContent: 'space-around' },
+  statItem: { alignItems: 'center' },
+  statNum: { fontSize: 18, fontWeight: '700' },
+  statLabel: { fontSize: 13 },
+  
+  bioContainer: { marginBottom: 16 },
+  realName: { fontSize: 16, fontWeight: '700' },
+
+  // Actions
+  actionButtons: { flexDirection: 'row', gap: 8 },
+  followBtn: { flex: 1, flexDirection: 'row', height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  messageBtn: { flex: 1, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  btnText: { fontSize: 14, fontWeight: '600' },
+
+  // Tabs
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1 },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'transparent' },
+
+  // Grid
+  gridImage: { width: '100%', height: '100%', backgroundColor: '#f0f0f0' },
+
+  // List
+  listItem: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 8, marginBottom: 8 },
+  listImage: { width: 60, height: 60, borderRadius: 8, marginRight: 12, backgroundColor: '#f0f0f0' },
+  listInfo: { flex: 1 },
+  listTitle: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  listPrice: { fontSize: 14, fontWeight: '700' },
+
+  // Empty
+  emptyContainer: { alignItems: 'center', marginTop: 60, gap: 10 },
+  emptyText: { fontSize: 16 },
 });

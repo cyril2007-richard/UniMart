@@ -16,10 +16,12 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Location from 'expo-location';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import Colors from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { db } from '../firebase';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -28,6 +30,23 @@ export default function CheckoutScreen() {
   const { currentUser } = useAuth();
   const { addNotification } = useNotification();
   const theme = Colors.light;
+
+  if (!currentUser) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', gap: 20 }]}>
+        <LogIn size={64} color={theme.secondaryText} />
+        <Text style={{ color: theme.text, fontSize: 18, textAlign: 'center' }}>
+          You must be logged in to checkout.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.payButton, { backgroundColor: theme.purple, width: 'auto', paddingHorizontal: 40 }]}
+          onPress={() => router.push('/(auth)/login')}
+        >
+          <Text style={styles.payButtonText}>Login Now</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Parse single buy now item if present
   const buyNowItem = params.buyNowItem ? JSON.parse(params.buyNowItem as string) : null;
@@ -46,23 +65,6 @@ export default function CheckoutScreen() {
       setDeliveryFee(500); // Flat rate for now
     }
   }, [deliveryMethod]);
-
-  if (!currentUser) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', gap: 20 }]}>
-        <LogIn size={64} color={theme.secondaryText} />
-        <Text style={{ color: theme.text, fontSize: 18, textAlign: 'center' }}>
-          You must be logged in to checkout.
-        </Text>
-        <TouchableOpacity 
-          style={[styles.payButton, { backgroundColor: theme.purple, width: 'auto', paddingHorizontal: 40 }]}
-          onPress={() => router.push('/(auth)/login')}
-        >
-          <Text style={styles.payButtonText}>Login Now</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   const itemsToCheckout = buyNowItem ? [buyNowItem] : cartItems.filter(item => item.selected);
   const subtotal = buyNowItem 
@@ -111,8 +113,7 @@ export default function CheckoutScreen() {
                 ].filter(Boolean).join(', ');
                 
                 setAddress(formattedAddress);
-              }
-            } catch (error) {
+              }            } catch (error) {
               Alert.alert('Error', 'Could not fetch location');
               console.error(error);
             } finally {
@@ -134,8 +135,7 @@ export default function CheckoutScreen() {
     
     // Simulate payment processing delay
     setTimeout(async () => {
-      setIsProcessing(false);
-      
+      // Notify Buyer
       if (deliveryMethod === 'rider') {
           addNotification(
               'Payment Successful! Your rider (Mike) is on the way. Contact: 08123456789',
@@ -147,6 +147,36 @@ export default function CheckoutScreen() {
               'success'
           );
       }
+
+      // Notify Sellers
+      const itemsBySeller: { [key: string]: any[] } = {};
+      itemsToCheckout.forEach((item: any) => {
+          if (!itemsBySeller[item.sellerId]) {
+              itemsBySeller[item.sellerId] = [];
+          }
+          itemsBySeller[item.sellerId].push(item);
+      });
+
+      // Send notification to each seller
+      for (const sellerId in itemsBySeller) {
+          const sellerItems = itemsBySeller[sellerId];
+          const itemNames = sellerItems.map(i => i.name || i.title).join(', ');
+          const totalAmount = sellerItems.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
+          
+          try {
+              const notificationsRef = collection(db, 'users', sellerId, 'notifications');
+              await addDoc(notificationsRef, {
+                  message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}.`,
+                  type: 'success',
+                  read: false,
+                  createdAt: serverTimestamp()
+              });
+          } catch (error) {
+              console.error(`Failed to notify seller ${sellerId}`, error);
+          }
+      }
+
+      setIsProcessing(false);
 
       if (!buyNowItem) {
         await clearCart(); // Only clear cart if it was a cart checkout
