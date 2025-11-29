@@ -19,7 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import CustomAlert from '../../components/CustomAlert';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
@@ -28,14 +28,14 @@ export default function LoginScreen() {
   const theme = Colors.light;
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!usernameOrEmail || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    const success = await login(email, password);
+    const success = await login(usernameOrEmail, password);
     if (success) {
-      router.replace('/(tabs)');
+      router.replace('/(app)/(tabs)');
     } else {
       setAlertVisible(true);
     }
@@ -70,12 +70,11 @@ export default function LoginScreen() {
               <Mail size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
-                placeholder="Email Address"
+                placeholder="Email or Username"
                 placeholderTextColor={theme.tabIconDefault}
-                value={email}
-                onChangeText={setEmail}
+                value={usernameOrEmail}
+                onChangeText={setUsernameOrEmail}
                 autoCapitalize="none"
-                keyboardType="email-address"
               />
             </View>
 

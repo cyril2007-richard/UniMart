@@ -27,7 +27,7 @@ export default function ProductScreen() {
   const theme = Colors.light;
   const router = useRouter();
   const { listings } = useListings();
-  const { categoryId, subcategory } = useLocalSearchParams();
+  const { categoryId, subcategory, minPrice, maxPrice } = useLocalSearchParams();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,11 +43,19 @@ export default function ProductScreen() {
     });
   }, [listings, categoryId, subcategory]);
 
+  const filteredByPrice = useMemo(() => {
+    return filteredByCategory.filter((p) => {
+      if (minPrice && p.price < Number(minPrice)) return false;
+      if (maxPrice && p.price > Number(maxPrice)) return false;
+      return true;
+    });
+  }, [filteredByCategory, minPrice, maxPrice]);
+
   const filteredBySearch = useMemo(() => {
-    if (!searchQuery) return filteredByCategory;
+    if (!searchQuery) return filteredByPrice;
     const q = searchQuery.toLowerCase();
-    return filteredByCategory.filter((p) => p.title.toLowerCase().includes(q));
-  }, [filteredByCategory, searchQuery]);
+    return filteredByPrice.filter((p) => p.title.toLowerCase().includes(q));
+  }, [filteredByPrice, searchQuery]);
 
   const sortedProducts = useMemo(() => {
     const arr = [...filteredBySearch];
@@ -166,7 +174,13 @@ export default function ProductScreen() {
         <TouchableOpacity
           style={[styles.floatingButton, { backgroundColor: theme.purple }]}
           onPress={() => {
-            // TODO: Implement filter logic
+            router.push({
+                pathname: '/(app)/modal',
+                params: {
+                    minPrice: minPrice,
+                    maxPrice: maxPrice
+                }
+            });
           }}
         >
           <Filter color={'white'} size={18} strokeWidth={2} />

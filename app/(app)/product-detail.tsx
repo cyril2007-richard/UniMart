@@ -24,6 +24,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
@@ -251,7 +252,7 @@ export default function ProductDetailScreen() {
       await addDoc(reviewsCollectionRef, {
         rating: newRating,
         comment: newReview,
-        userName: currentUser.name,
+        userName: currentUser.username,
         createdAt: serverTimestamp(),
       });
       setNewReview('');
@@ -265,6 +266,14 @@ export default function ProductDetailScreen() {
     } catch (error) {
       console.error('Error adding review: ', error);
       Alert.alert('Error', 'Failed to submit review. Please try again.');
+    }
+  };
+
+  const handleCall = () => {
+    if (seller && seller.phoneNumber) {
+      Linking.openURL(`tel:${seller.phoneNumber}`);
+    } else {
+      Alert.alert('Info', 'Seller phone number not available.');
     }
   };
 
@@ -370,7 +379,7 @@ export default function ProductDetailScreen() {
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.lightPurple }]} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.lightPurple }]} activeOpacity={0.7} onPress={handleCall}>
               <Phone color={theme.text} size={20} strokeWidth={2} />
               <Text style={[styles.actionButtonText, { color: theme.text }]}>Call</Text>
             </TouchableOpacity>

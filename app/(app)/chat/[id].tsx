@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { Camera, ChevronLeft, MoreVertical, Paperclip, Phone, Send, Smile, Video } from "lucide-react-native";
+import { Camera, ChevronLeft, MoreVertical, Paperclip, Send, Smile } from "lucide-react-native";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from "react";
 import {
@@ -179,12 +179,6 @@ export default function ConversationScreen() {
           </View>
           <View style={styles.headerRight}>
              <TouchableOpacity style={styles.headerIcon}>
-                <Video size={22} color={theme.white} />
-             </TouchableOpacity>
-             <TouchableOpacity style={styles.headerIcon}>
-                <Phone size={20} color={theme.white} />
-             </TouchableOpacity>
-             <TouchableOpacity style={styles.headerIcon}>
                 <MoreVertical size={20} color={theme.white} />
              </TouchableOpacity>
           </View>
@@ -206,7 +200,7 @@ export default function ConversationScreen() {
                         style={[
                             styles.messageBubble,
                             isMyMessage ? styles.myMessage : styles.theirMessage,
-                            { backgroundColor: isMyMessage ? theme.messageBubble : theme.white }
+                            { backgroundColor: isMyMessage ? theme.messageBubbleSender : theme.white }
                         ]}
                     >
                         {item.type === 'image' && item.imageUrl ? (

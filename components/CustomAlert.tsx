@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../constants/Colors';
 
 interface CustomAlertProps {
@@ -29,7 +29,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, onCa
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.button, styles.confirmButton]} onPress={onConfirm}>
-              <Text style={styles.buttonText}>Delete</Text>
+              <Text style={styles.buttonText}>Retry</Text>
             </TouchableOpacity>
           </View>
         </View>

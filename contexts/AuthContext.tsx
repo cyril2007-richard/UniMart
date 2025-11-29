@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -19,6 +19,7 @@ type User = {
   profilePicture: string;
   matricNumber: string;
   faculty: string;
+  phoneNumber: string;
   followers: number;
   following: number;
 };
@@ -33,7 +34,7 @@ type SignUpData = Omit<User, 'id' | 'followers' | 'following'> & {
 type AuthContextType = {
   currentUser: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
   signup: (newUser: SignUpData) => Promise<boolean>; // <-- FIX: Use the new SignUpData type
   logout: () => Promise<void>;
   updateProfile: (userId: string, username: string, profilePictureUri?: string) => Promise<boolean>;
@@ -66,9 +67,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password); // <-- FIX: Use imported signInWithEmailAndPassword
+      let email = usernameOrEmail;
+      
+      // If input is not an email, assume it's a username and find the email
+      if (!usernameOrEmail.includes('@')) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', usernameOrEmail));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            console.error('Username not found');
+            return false;
+        }
+        
+        // Assuming usernames are unique, take the first match
+        email = querySnapshot.docs[0].data().email;
+      }
+
+      await signInWithEmailAndPassword(auth, email, password); 
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -82,6 +100,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!newUser.password) {
         throw new Error("Password is required for signup.");
       }
+
+      // Check if username already exists
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('username', '==', newUser.username));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        console.error('Username already exists');
+        return false;
+      }
+
       // <-- FIX: Use imported createUserWithEmailAndPassword
       const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
       const firebaseUser = userCredential.user;
@@ -93,6 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profilePicture: newUser.profilePicture,
         matricNumber: newUser.matricNumber,
         faculty: newUser.faculty,
+        phoneNumber: newUser.phoneNumber,
         followers: 0,
         following: 0,
       };

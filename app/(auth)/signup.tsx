@@ -73,7 +73,7 @@ export default function SignupScreen() {
 
       if (success) {
         Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => router.replace('/(tabs)') },
+          { text: 'OK', onPress: () => router.replace('/(app)/(tabs)') },
         ]);
       } else {
         Alert.alert('Error', 'Email or username already exists');
