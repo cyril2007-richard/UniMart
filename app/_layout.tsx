@@ -70,9 +70,8 @@ function RootLayoutNav() {
 
     if (currentUser && inAuthGroup) {
       router.replace('/');
-    } else if (!currentUser && !inAuthGroup) {
-      router.replace('/(auth)/login');
     }
+    // Removed forced redirect to login to allow guest access
   }, [currentUser, loading, segments]);
 
   if (loading) {

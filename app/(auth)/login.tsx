@@ -122,10 +122,23 @@ export default function LoginScreen() {
               style={[styles.googleButton, { borderColor: theme.surface, backgroundColor: theme.background }]}
               activeOpacity={0.7}
             >
-              {/* Placeholder for Google Icon - effectively just a colored G for now */}
-              <Text style={styles.googleIcon}>G</Text>
+              <Image 
+                source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }} 
+                style={styles.googleLogoImage} 
+              />
               <Text style={[styles.googleButtonText, { color: theme.text }]}>Sign in with Google</Text>
             </TouchableOpacity>
+
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={[styles.appleButton, { backgroundColor: 'black' }]}
+                activeOpacity={0.7}
+              >
+                {/* Simulating Apple Logo */}
+                <Text style={[styles.appleIcon, { color: 'white' }]}></Text>
+                <Text style={[styles.appleButtonText, { color: 'white' }]}>Sign in with Apple</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Footer */}
@@ -135,6 +148,13 @@ export default function LoginScreen() {
               <Text style={[styles.signupText, { color: theme.purple }]}>Sign Up</Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity 
+            style={styles.skipButton} 
+            onPress={() => router.replace('/(app)/(tabs)')}
+          >
+            <Text style={[styles.skipText, { color: theme.secondaryText }]}>Continue as Guest</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -202,13 +222,14 @@ const styles = StyleSheet.create({
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: 24,
+    padding: 10, // Increased touch target
   },
   forgotPasswordText: {
     fontSize: 14,
     fontWeight: '600',
   },
   signInButton: {
-    height: 56,
+    height: 50, // Standard accessible height
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
@@ -247,13 +268,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 24,
   },
-  googleIcon: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4285F4',
+  googleLogoImage: {
+    width: 24,
+    height: 24,
     marginRight: 12,
+    resizeMode: 'contain',
   },
   googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  appleIcon: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginRight: 12,
+  },
+  appleButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },
@@ -261,6 +299,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 16, // Add padding for easier tap
   },
   footerText: {
     fontSize: 14,
@@ -268,5 +307,15 @@ const styles = StyleSheet.create({
   signupText: {
     fontSize: 14,
     fontWeight: 'bold',
+    padding: 8, // Add padding to the link itself
+  },
+  skipButton: {
+    alignSelf: 'center',
+    marginTop: 20,
+    padding: 10,
+  },
+  skipText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

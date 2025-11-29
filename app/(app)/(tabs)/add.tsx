@@ -1,6 +1,6 @@
-import { Camera, ChevronDown, ChevronRight, DollarSign, Image as ImageIcon, UploadCloud, X, XCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { Camera, ChevronDown, ChevronRight, UploadCloud, X, XCircle } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,30 +8,39 @@ import {
   Dimensions,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../../constants/Colors';
-import { useCategories, Category } from '../../../contexts/CategoryContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Category, useCategories } from '../../../contexts/CategoryContext';
 import { useListings } from '../../../contexts/ListingsContext';
 
 const { width } = Dimensions.get('window');
+const GAP = 12;
+const PADDING = 20;
+const IMAGE_SIZE = (width - (PADDING * 2) - (GAP * 2)) / 3;
 const MAX_IMAGES = 6;
 const MAX_IMAGE_SIZE_MB = 5;
 
 export default function AddScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { addListing } = useListings();
   const { currentUser } = useAuth();
   const { categories, loading: categoriesLoading } = useCategories();
   const theme = Colors.light;
 
+  // Form State
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
@@ -40,6 +49,7 @@ export default function AddScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Modal State
   const [catModal, setCatModal] = useState(false);
   const [subModal, setSubModal] = useState(false);
 
@@ -65,7 +75,7 @@ export default function AddScreen() {
 
   const pickImages = useCallback(async () => {
     if (images.length >= MAX_IMAGES) {
-      Alert.alert('Limit', `You can upload a maximum of ${MAX_IMAGES} photos.`);
+      Alert.alert('Limit Reached', `You can upload a maximum of ${MAX_IMAGES} photos.`);
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -106,40 +116,48 @@ export default function AddScreen() {
         category: category!.id,
         subcategory,
       });
-      Alert.alert('Success!', 'Your listing has been published.', [
+      Alert.alert('Success!', 'Your listing is now live.', [
         { text: 'View Profile', onPress: () => router.push('/(app)/(tabs)/profile') },
         { text: 'Add Another', onPress: resetForm, style: 'cancel' },
       ]);
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'There was an issue publishing your listing. Please try again.');
+      Alert.alert('Error', 'There was an issue publishing your listing.');
     } finally {
       setLoading(false);
     }
   }, [isValid, currentUser, title, price, description, images, category, subcategory]);
 
   const resetForm = useCallback(() => {
-    setTitle('');
-    setPrice('');
-    setDescription('');
-    setImages([]);
-    if (categories.length > 0) {
-      const first = categories[0];
-      setCategory(first);
-      setSubcategory(first.subcategories[0] ?? '');
-    }
+    Alert.alert('Reset Form', 'Are you sure you want to clear all fields?', [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+            text: 'Reset', 
+            style: 'destructive',
+            onPress: () => {
+                setTitle('');
+                setPrice('');
+                setDescription('');
+                setImages([]);
+                if (categories.length > 0) {
+                    const first = categories[0];
+                    setCategory(first);
+                    setSubcategory(first.subcategories[0] ?? '');
+                }
+            }
+        }
+    ]);
   }, [categories]);
 
-  const handlePriceChange = useCallback((text: string) => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setPrice(numericValue);
-  }, []);
-
+  // Auth Guard
   if (!currentUser) {
     return (
       <View style={[styles.center, {backgroundColor: theme.background}]}>
-        <UploadCloud size={64} color={theme.secondaryText} />
-        <Text style={[styles.loginText, {color: theme.secondaryText}]}>Log in to sell your items</Text>
+        <View style={[styles.loginIcon, { backgroundColor: theme.surface }]}>
+            <UploadCloud size={48} color={theme.purple} />
+        </View>
+        <Text style={[styles.loginTitle, {color: theme.text}]}>Start Selling</Text>
+        <Text style={[styles.loginText, {color: theme.secondaryText}]}>Log in to post items on UniMart.</Text>
         <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.purple}]} onPress={() => router.push('/(auth)/login')}>
           <Text style={styles.loginBtnText}>Login or Sign Up</Text>
         </TouchableOpacity>
@@ -149,288 +167,275 @@ export default function AddScreen() {
 
   return (
     <View style={[styles.container, {backgroundColor: theme.background}]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, {color: theme.text}]}>New Listing</Text>
-      </View>
+      <StatusBar barStyle="dark-content" />
       
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+        <Text style={[styles.headerTitle, {color: theme.text}]}>New Listing</Text>
+        <TouchableOpacity onPress={resetForm} style={styles.resetButton}>
+            <Text style={[styles.resetText, { color: theme.secondaryText }]}>Reset</Text>
+        </TouchableOpacity>
+      </View>
+
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <ScrollView 
+        showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
       >
-        {/* Image Picker Section */}
+        
+        {/* Photos Section */}
         <View style={styles.section}>
-            <Text style={[styles.sectionTitle, {color: theme.text}]}>Photos</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
-                <TouchableOpacity
-                    style={[styles.addPhotoCard, {backgroundColor: theme.surface, borderColor: theme.tabIconDefault}]}
-                    onPress={pickImages}
-                >
-                    <Camera size={28} color={theme.purple} />
-                    <Text style={[styles.addPhotoText, {color: theme.purple}]}>Add Photo</Text>
-                    <Text style={[styles.photoLimitText, {color: theme.secondaryText}]}>{images.length}/{MAX_IMAGES}</Text>
-                </TouchableOpacity>
-                
+            <View style={styles.sectionHeader}>
+                <Text style={[styles.label, {color: theme.text}]}>Photos</Text>
+                <Text style={[styles.counter, {color: theme.secondaryText}]}>{images.length}/{MAX_IMAGES}</Text>
+            </View>
+            <View style={styles.imageGrid}>
                 {images.map((uri, i) => (
-                    <View key={`${uri}-${i}`} style={styles.photoCard}>
-                        <Image source={{ uri }} style={styles.photoImage} resizeMode="cover" />
+                    <View key={`${uri}-${i}`} style={styles.imageWrapper}>
+                        <Image source={{ uri }} style={styles.image} resizeMode="cover" />
                         <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(i)}>
-                            <XCircle size={22} color={theme.white} fill={theme.secondaryText} />
+                            <XCircle size={22} color="white" fill={theme.purple || "#FF4444"} />
                         </TouchableOpacity>
                     </View>
                 ))}
-            </ScrollView>
+                {images.length < MAX_IMAGES && (
+                    <TouchableOpacity
+                        style={[styles.photoUploader, {backgroundColor: theme.surface, borderColor: theme.lightPurple || '#e0e0e0'}]}
+                        onPress={pickImages}
+                    >
+                        <Camera size={28} color={theme.purple} />
+                        <Text style={[styles.uploadText, { color: theme.purple }]}>Add Photo</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
         </View>
 
         {/* Details Section */}
         <View style={styles.section}>
-            <Text style={[styles.sectionTitle, {color: theme.text}]}>Details</Text>
-            
-            <View style={[styles.inputContainer, {backgroundColor: theme.surface}]}>
-                <Text style={[styles.inputLabel, {color: theme.secondaryText}]}>Title</Text>
-                <TextInput 
-                    placeholder="What are you selling?" 
-                    style={[styles.input, {color: theme.text}]} 
-                    value={title} 
-                    onChangeText={setTitle} 
-                    maxLength={80} 
-                    placeholderTextColor={theme.tabIconDefault}
-                />
-            </View>
+            <Text style={[styles.label, {color: theme.text}]}>Title</Text>
+            <TextInput 
+                placeholder="What are you selling?" 
+                placeholderTextColor={theme.secondaryText}
+                style={[styles.input, {backgroundColor: theme.surface, color: theme.text}]} 
+                value={title} 
+                onChangeText={setTitle} 
+                maxLength={80} 
+            />
 
-            <View style={[styles.inputContainer, {backgroundColor: theme.surface}]}>
-                <Text style={[styles.inputLabel, {color: theme.secondaryText}]}>Price</Text>
-                <View style={styles.priceInputWrapper}>
-                    <Text style={[styles.currencySymbol, {color: theme.text}]}>₦</Text>
-                    <TextInput
-                        placeholder="0.00"
-                        style={[styles.input, {color: theme.text, flex: 1}]}
-                        keyboardType="numeric"
-                        value={price ? Number(price).toLocaleString('en-US') : ''}
-                        onChangeText={handlePriceChange}
-                        maxLength={13}
-                        placeholderTextColor={theme.tabIconDefault}
-                    />
-                </View>
-            </View>
-
-            <TouchableOpacity style={[styles.pickerButton, {backgroundColor: theme.surface}]} onPress={() => setCatModal(true)}>
-                <View>
-                    <Text style={[styles.inputLabel, {color: theme.secondaryText}]}>Category</Text>
-                    <Text style={[styles.pickerValue, {color: theme.text}]}>{category?.name ?? 'Select'}</Text>
-                </View>
-                <ChevronDown size={20} color={theme.secondaryText} />
-            </TouchableOpacity>
-
-            {category && category.subcategories.length > 0 && (
-                <TouchableOpacity style={[styles.pickerButton, {backgroundColor: theme.surface, marginTop: 12}]} onPress={() => setSubModal(true)}>
-                    <View>
-                        <Text style={[styles.inputLabel, {color: theme.secondaryText}]}>Subcategory</Text>
-                        <Text style={[styles.pickerValue, {color: theme.text}]}>{subcategory || 'Select'}</Text>
-                    </View>
-                    <ChevronDown size={20} color={theme.secondaryText} />
-                </TouchableOpacity>
-            )}
-        </View>
-
-        {/* Description Section */}
-        <View style={styles.section}>
-            <Text style={[styles.sectionTitle, {color: theme.text}]}>Description</Text>
-            <View style={[styles.inputContainer, {backgroundColor: theme.surface, height: 150}]}>
+            <Text style={[styles.label, {color: theme.text}]}>Price</Text>
+            <View style={[styles.priceInputContainer, { backgroundColor: theme.surface }]}>
+                <Text style={[styles.currencySymbol, { color: theme.text }]}>₦</Text>
                 <TextInput
-                    placeholder="Describe your item in detail..."
-                    style={[styles.textArea, {color: theme.text}]}
-                    multiline
-                    value={description}
-                    onChangeText={setDescription}
-                    maxLength={1000}
-                    textAlignVertical="top"
-                    placeholderTextColor={theme.tabIconDefault}
+                    placeholder="0.00"
+                    placeholderTextColor={theme.secondaryText}
+                    style={[styles.priceInput, {color: theme.text}]}
+                    keyboardType="numeric"
+                    value={price}
+                    onChangeText={t => setPrice(t.replace(/[^0-9]/g, ''))}
+                    maxLength={10}
                 />
-                <Text style={[styles.charCount, {color: theme.secondaryText}]}>{description.length}/1000</Text>
             </View>
+
+            <View style={styles.row}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={[styles.label, {color: theme.text}]}>Category</Text>
+                    <TouchableOpacity style={[styles.dropdown, {backgroundColor: theme.surface}]} onPress={() => setCatModal(true)}>
+                        <Text numberOfLines={1} style={[styles.dropdownText, {color: category ? theme.text : theme.secondaryText}]}>
+                            {category?.name ?? 'Select'}
+                        </Text>
+                        <ChevronDown size={18} color={theme.secondaryText} />
+                    </TouchableOpacity>
+                </View>
+
+                {category && category.subcategories.length > 0 && (
+                    <View style={{ flex: 1, marginLeft: 8 }}>
+                        <Text style={[styles.label, {color: theme.text}]}>Subcategory</Text>
+                        <TouchableOpacity style={[styles.dropdown, {backgroundColor: theme.surface}]} onPress={() => setSubModal(true)}>
+                            <Text numberOfLines={1} style={[styles.dropdownText, {color: subcategory ? theme.text : theme.secondaryText}]}>
+                                {subcategory || 'Select'}
+                            </Text>
+                            <ChevronDown size={18} color={theme.secondaryText} />
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </View>
+
+            <View style={styles.sectionHeader}>
+                <Text style={[styles.label, {color: theme.text}]}>Description</Text>
+                <Text style={[styles.counter, {color: theme.secondaryText}]}>{description.length}/1000</Text>
+            </View>
+            <TextInput
+                placeholder="Describe your item in detail..."
+                placeholderTextColor={theme.secondaryText}
+                style={[styles.textArea, {backgroundColor: theme.surface, color: theme.text}]}
+                multiline
+                textAlignVertical="top"
+                value={description}
+                onChangeText={setDescription}
+                maxLength={1000}
+            />
         </View>
 
-        <View style={{ height: 100 }} />
+        <TouchableOpacity
+          style={[styles.submitBtn, {backgroundColor: theme.purple}, (!isValid || loading) && styles.submitBtnDisabled]}
+          onPress={handleCreate}
+          disabled={!isValid || loading}
+          activeOpacity={0.8}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <Text style={styles.submitText}>Publish Listing</Text>
+              <ChevronRight size={20} color="white" />
+            </>
+          )}
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
-        {/* Sticky Submit Button */}
-        <View style={[styles.footer, {backgroundColor: theme.background, borderTopColor: theme.surface}]}>
-            <TouchableOpacity
-                style={[styles.submitBtn, {backgroundColor: theme.purple}, (!isValid || loading) && styles.submitBtnDisabled]}
-                onPress={handleCreate}
-                disabled={!isValid || loading}
-            >
-                {loading ? (
-                    <ActivityIndicator color="white" />
-                ) : (
-                    <Text style={styles.submitText}>Publish Listing</Text>
-                )}
-            </TouchableOpacity>
+      {/* Category Modal */}
+      <Modal visible={catModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setCatModal(false)} />
+            <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
+                <View style={styles.modalHeader}>
+                    <Text style={[styles.modalTitle, {color: theme.text}]}>Select Category</Text>
+                    <TouchableOpacity style={styles.modalClose} onPress={() => setCatModal(false)}>
+                        <X size={20} color={theme.text} />
+                    </TouchableOpacity>
+                </View>
+                <FlatList
+                    data={categories}
+                    keyExtractor={i => i.id}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={[styles.modalItem, {borderBottomColor: theme.surface}]}
+                            onPress={() => {
+                                setCategory(item);
+                                setSubcategory(item.subcategories[0] ?? '');
+                                setCatModal(false);
+                            }}
+                        >
+                            <Text style={[styles.modalItemText, {color: theme.text}]}>{item.name}</Text>
+                            {category?.id === item.id && <ChevronRight size={20} color={theme.purple} />}
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
         </View>
+      </Modal>
 
-        {/* Modals */}
-        <Modal visible={catModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
+      {/* Subcategory Modal */}
+      <Modal visible={subModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setSubModal(false)} />
             <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
-              <View style={[styles.modalHeader, {borderBottomColor: theme.surface}]}>
-                <Text style={[styles.modalTitle, {color: theme.text}]}>Category</Text>
-                <TouchableOpacity onPress={() => setCatModal(false)} style={styles.modalCloseBtn}>
-                  <X size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
-              <FlatList
-                data={categories}
-                keyExtractor={i => i.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.modalItem, {borderBottomColor: theme.surface}]}
-                    onPress={() => {
-                      setCategory(item);
-                      setSubcategory(item.subcategories[0] ?? '');
-                      setCatModal(false);
-                    }}
-                  >
-                    <Text style={[styles.modalItemText, {color: theme.text}]}>{item.name}</Text>
-                    <ChevronRight size={20} color={theme.secondaryText} />
-                  </TouchableOpacity>
-                )}
-              />
+                <View style={styles.modalHeader}>
+                    <Text style={[styles.modalTitle, {color: theme.text}]}>Select Subcategory</Text>
+                    <TouchableOpacity style={styles.modalClose} onPress={() => setSubModal(false)}>
+                        <X size={20} color={theme.text} />
+                    </TouchableOpacity>
+                </View>
+                <FlatList
+                    data={category?.subcategories ?? []}
+                    keyExtractor={(_, i) => i.toString()}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={[styles.modalItem, {borderBottomColor: theme.surface}]}
+                            onPress={() => {
+                                setSubcategory(item);
+                                setSubModal(false);
+                            }}
+                        >
+                            <Text style={[styles.modalItemText, {color: theme.text}]}>{item}</Text>
+                            {subcategory === item && <ChevronRight size={20} color={theme.purple} />}
+                        </TouchableOpacity>
+                    )}
+                />
             </View>
-          </View>
-        </Modal>
-
-        <Modal visible={subModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
-              <View style={[styles.modalHeader, {borderBottomColor: theme.surface}]}>
-                <Text style={[styles.modalTitle, {color: theme.text}]}>Subcategory</Text>
-                <TouchableOpacity onPress={() => setSubModal(false)} style={styles.modalCloseBtn}>
-                  <X size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
-              <FlatList
-                data={category?.subcategories ?? []}
-                keyExtractor={(_, i) => i.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.modalItem, {borderBottomColor: theme.surface}]}
-                    onPress={() => {
-                      setSubcategory(item);
-                      setSubModal(false);
-                    }}
-                  >
-                    <Text style={[styles.modalItemText, {color: theme.text}]}>{item}</Text>
-                    {subcategory === item && <View style={[styles.selectedDot, {backgroundColor: theme.purple}]} />}
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          </View>
-        </Modal>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 20 },
-    loginText: { fontSize: 18, textAlign: 'center', marginTop: 10 },
-    loginBtn: { paddingHorizontal: 32, paddingVertical: 14, borderRadius: 30 },
-    loginBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  container: { flex: 1 },
+  scrollContent: { padding: PADDING },
+  
+  // Login State
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  loginIcon: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  loginTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
+  loginText: { fontSize: 16, marginBottom: 32, textAlign: 'center', maxWidth: 250 },
+  loginBtn: { paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14, width: '100%', alignItems: 'center' },
+  loginBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 
-    header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16 },
-    title: { fontSize: 28, fontWeight: '800' },
-    
-    scrollContent: { paddingBottom: 40 },
-    
-    section: { marginBottom: 24, paddingHorizontal: 24 },
-    sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-    
-    photoScroll: { marginHorizontal: -24, paddingHorizontal: 24 },
-    addPhotoCard: {
-        width: 100,
-        height: 100,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    addPhotoText: { fontSize: 12, fontWeight: '600', marginTop: 4 },
-    photoLimitText: { fontSize: 10, marginTop: 2 },
-    
-    photoCard: { width: 100, height: 100, marginRight: 12, borderRadius: 12, position: 'relative' },
-    photoImage: { width: '100%', height: '100%', borderRadius: 12 },
-    removeBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'white', borderRadius: 12 },
+  // Header
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)'
+  },
+  headerTitle: { fontSize: 20, fontWeight: '700' },
+  resetButton: { padding: 4 },
+  resetText: { fontSize: 15, fontWeight: '500' },
 
-    inputContainer: {
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        marginBottom: 12,
-    },
-    inputLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4, textTransform: 'uppercase' },
-    input: { fontSize: 16, fontWeight: '500', padding: 0 },
-    priceInputWrapper: { flexDirection: 'row', alignItems: 'center' },
-    currencySymbol: { fontSize: 16, fontWeight: '600', marginRight: 4 },
-    
-    pickerButton: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-    },
-    pickerValue: { fontSize: 16, fontWeight: '500' },
-    
-    textArea: { fontSize: 16, flex: 1, padding: 0 },
-    charCount: { fontSize: 11, textAlign: 'right', marginTop: 8 },
-    
-    footer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: 24,
-        paddingBottom: 40,
-        borderTopWidth: 1,
-    },
-    submitBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        borderRadius: 16,
-    },
-    submitBtnDisabled: { opacity: 0.5 },
-    submitText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  // Sections
+  section: { marginBottom: 30 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  label: { fontSize: 15, fontWeight: '600', marginBottom: 8, marginTop: 12 },
+  counter: { fontSize: 12 },
+  row: { flexDirection: 'row' },
 
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingBottom: 40,
-        maxHeight: '80%',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-        borderBottomWidth: 1,
-        position: 'relative',
-    },
-    modalTitle: { fontSize: 18, fontWeight: '700' },
-    modalCloseBtn: { position: 'absolute', right: 20 },
-    modalItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-    },
-    modalItemText: { fontSize: 16, fontWeight: '500' },
-    selectedDot: { width: 8, height: 8, borderRadius: 4 },
+  // Inputs
+  input: { borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16 },
+  textArea: { borderRadius: 12, paddingHorizontal: 16, paddingTop: 14, fontSize: 16, height: 120 },
+  
+  priceInputContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, height: 50 },
+  currencySymbol: { fontSize: 18, fontWeight: '600', marginRight: 4 },
+  priceInput: { flex: 1, fontSize: 18, fontWeight: '600', height: '100%' },
+
+  dropdown: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 12, paddingHorizontal: 12, height: 50 },
+  dropdownText: { fontSize: 15, flex: 1 },
+
+  // Image Grid
+  imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
+  imageWrapper: { position: 'relative' },
+  image: { width: IMAGE_SIZE, height: IMAGE_SIZE, borderRadius: 12 },
+  removeBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'white', borderRadius: 12 },
+  
+  photoUploader: {
+    width: IMAGE_SIZE,
+    height: IMAGE_SIZE,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  uploadText: { fontSize: 12, fontWeight: '600', marginTop: 4 },
+
+  // Submit
+  submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 18, borderRadius: 14, marginTop: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  submitBtnDisabled: { opacity: 0.6 },
+  submitText: { color: '#fff', fontWeight: '700', fontSize: 17, marginRight: 8 },
+
+  // Modals
+  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 40, maxHeight: '80%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
+  modalTitle: { fontSize: 18, fontWeight: '700' },
+  modalClose: { padding: 4, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 20 },
+  modalItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
+  modalItemText: { fontSize: 16, fontWeight: '500' },
 });

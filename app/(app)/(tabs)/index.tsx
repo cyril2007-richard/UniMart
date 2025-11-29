@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Bell, Bike, Package, Search, Settings, ShoppingCart, TrendingUp } from 'lucide-react-native';
+import { Bell, Bike, ChevronDown, ChevronUp, Package, Search, Settings, ShoppingCart, TrendingUp } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import { Dimensions, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../../constants/Colors';
@@ -13,6 +13,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const carouselRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showQuickActions, setShowQuickActions] = useState(true);
 
   const sponsors = [
     {
@@ -122,29 +123,43 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.secondaryText }]}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/how-to-buy')}>
-              <View style={[styles.actionIconContainer, { backgroundColor: theme.surface }]}>
-                <TrendingUp color={theme.text} size={20} strokeWidth={2} />
-              </View>
-              <Text style={[styles.actionTitle, { color: theme.text }]}>How to Buy</Text>
-            </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sectionHeader} 
+            onPress={() => setShowQuickActions(!showQuickActions)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sectionTitle, { color: theme.secondaryText }]}>Quick Actions</Text>
+            {showQuickActions ? (
+              <ChevronUp size={20} color={theme.secondaryText} />
+            ) : (
+              <ChevronDown size={20} color={theme.secondaryText} />
+            )}
+          </TouchableOpacity>
+          
+          {showQuickActions && (
+            <View style={styles.actionsGrid}>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/how-to-buy')}>
+                <View style={[styles.actionIconContainer, { backgroundColor: theme.surface }]}>
+                  <TrendingUp color={theme.text} size={20} strokeWidth={2} />
+                </View>
+                <Text style={[styles.actionTitle, { color: theme.text }]}>How to Buy</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/how-to-sell')}>
-              <View style={[styles.actionIconContainer, { backgroundColor: theme.surface }]}>
-                <Package color={theme.text} size={20} strokeWidth={2} />
-              </View>
-              <Text style={[styles.actionTitle, { color: theme.text }]}>How to Sell</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/how-to-sell')}>
+                <View style={[styles.actionIconContainer, { backgroundColor: theme.surface }]}>
+                  <Package color={theme.text} size={20} strokeWidth={2} />
+                </View>
+                <Text style={[styles.actionTitle, { color: theme.text }]}>How to Sell</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/apply')}>
-              <View style={[styles.actionIconContainer, { backgroundColor: theme.surface }]}>
-                <Bike color={theme.text} size={20} strokeWidth={2} />
-              </View>
-              <Text style={[styles.actionTitle, { color: theme.text }]}>Become a Rider</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/apply')}>
+                <View style={[styles.actionIconContainer, { backgroundColor: theme.surface }]}>
+                  <Bike color={theme.text} size={20} strokeWidth={2} />
+                </View>
+                <Text style={[styles.actionTitle, { color: theme.text }]}>Become a Rider</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <View style={{ height: 40 }} />
@@ -232,12 +247,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 16,
   },
   actionsGrid: {
     flexDirection: 'row',

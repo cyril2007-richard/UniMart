@@ -1,9 +1,9 @@
 
-import { View, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
-import React from 'react';
-import Colors from '../../constants/Colors';
-import { Package } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { Package } from 'lucide-react-native';
+import React from 'react';
+import { StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import Colors from '../../constants/Colors';
 
 const InstructionStep = ({ number, text }: { number: number; text: string }) => (
   <View style={styles.stepContainer}>
@@ -27,9 +27,10 @@ export default function HowToSellScreen() {
               <Package size={28} color={theme.purple} strokeWidth={2} />
               <Text style={[styles.title, { color: theme.text }]}>How to Sell</Text>
             </View>
-            <InstructionStep number={1} text="Tap the '+' button to create a new listing." />
-            <InstructionStep number={2} text="Fill in the details of your item, including photos and price." />
-            <InstructionStep number={3} text="Wait for buyers to contact you." />
+<InstructionStep number={1} text="Tap the '+' button to create a new listing." />
+<InstructionStep number={2} text="Fill in the details of your item, including photos and price." />
+<InstructionStep number={3} text="Wait for buyers to contact you." />
+<InstructionStep number={4} text="Ensure your profile is verified to increase buyer trust and visibility." />
           </View>
         </TouchableWithoutFeedback>
       </View>

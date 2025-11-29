@@ -16,7 +16,7 @@ export default {
     lightPurple: '#F3E5F5',  // Very light purple for subtle surface/highlights
     white: '#FFFFFF',
     black: '#000000',
-    secondaryText: '#757575', // Medium gray for secondary info/labels
+    secondaryText: '#555555', // Medium-Dark gray for better contrast (Accessibility)
     surface: '#FAFAFA',      // Off-white for cards/surfaces
 
     // 🛍️ E-commerce Chat Colors (Purple-Themed)

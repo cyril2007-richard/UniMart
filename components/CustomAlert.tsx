@@ -26,10 +26,10 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, onCa
           <Text style={[styles.modalMessage, { color: theme.text }]}>{message}</Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel}>
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.button, styles.confirmButton]} onPress={onConfirm}>
-              <Text style={styles.buttonText}>Retry</Text>
+              <Text style={[styles.buttonText, styles.confirmButtonText]}>Retry</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -47,41 +47,49 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '80%',
-    borderRadius: 10,
-    padding: 20,
+    borderRadius: 16, // Slightly more rounded for modern look
+    padding: 24,
     alignItems: 'center',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   modalMessage: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    lineHeight: 22,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between', // Better spacing
     width: '100%',
+    gap: 12,
   },
   button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    minWidth: 100,
+    paddingVertical: 14, // Increased height for touch target
+    borderRadius: 12,
+    flex: 1, // Equal width buttons
     alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#F5F5F5', // Light gray surface
   },
   confirmButton: {
     backgroundColor: '#e74c3c',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  cancelButtonText: {
+    color: '#333333', // High contrast dark text
+  },
+  confirmButtonText: {
+    color: 'white', // High contrast white text on red
   },
 });
 

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, LogOut, User, HelpCircle, BadgeDollarSign, LifeBuoy, UserCircle } from 'lucide-react-native';
+import { ChevronRight, LogOut, User, HelpCircle, BadgeDollarSign, LifeBuoy, UserCircle, LogIn } from 'lucide-react-native';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../../constants/Colors';
@@ -23,22 +23,31 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const accountItems = currentUser ? [
+    {
+      icon: User,
+      name: 'View Profile',
+      action: () => router.push('/(app)/(tabs)/profile'),
+    },
+    {
+      icon: LogOut,
+      name: 'Logout',
+      action: handleLogout,
+      isDestructive: true,
+    },
+  ] : [
+    {
+      icon: LogIn,
+      name: 'Login',
+      action: () => router.push('/(auth)/login'),
+      color: '#4CAF50', // Green for login
+    },
+  ];
+
   const menuItems = [
     {
       title: 'Account',
-      items: [
-        {
-          icon: User,
-          name: 'View Profile',
-          action: () => router.push('/(app)/(tabs)/profile'),
-        },
-        {
-          icon: LogOut,
-          name: 'Logout',
-          action: handleLogout,
-          isDestructive: true,
-        },
-      ],
+      items: accountItems,
     },
     {
       title: 'Information',
@@ -84,7 +93,7 @@ export default function SettingsScreen() {
             <View style={[styles.menuContainer, { backgroundColor: theme.surface }]}>
               {section.items.map((item, itemIndex) => {
                 const Icon = item.icon;
-                const itemColor = item.isDestructive ? '#e74c3c' : theme.text;
+                const itemColor = item.color || (item.isDestructive ? '#e74c3c' : theme.text);
                 return (
                   <TouchableOpacity
                     key={itemIndex}

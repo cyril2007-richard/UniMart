@@ -1,5 +1,5 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Bike, Building2, CheckCircle2, Copy, CreditCard, LocateFixed, MapPin, Phone, ShieldCheck, Truck, User } from 'lucide-react-native';
+import { ArrowLeft, Bike, Building2, CheckCircle2, Copy, CreditCard, LocateFixed, MapPin, Phone, ShieldCheck, Truck, User, LogIn } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import {
   Alert,
@@ -47,6 +47,23 @@ export default function CheckoutScreen() {
     }
   }, [deliveryMethod]);
 
+  if (!currentUser) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', gap: 20 }]}>
+        <LogIn size={64} color={theme.secondaryText} />
+        <Text style={{ color: theme.text, fontSize: 18, textAlign: 'center' }}>
+          You must be logged in to checkout.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.payButton, { backgroundColor: theme.purple, width: 'auto', paddingHorizontal: 40 }]}
+          onPress={() => router.push('/(auth)/login')}
+        >
+          <Text style={styles.payButtonText}>Login Now</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const itemsToCheckout = buyNowItem ? [buyNowItem] : cartItems.filter(item => item.selected);
   const subtotal = buyNowItem 
     ? buyNowItem.price 
@@ -60,39 +77,51 @@ export default function CheckoutScreen() {
   };
 
   const handleUseLocation = async () => {
-    setIsLocating(true);
-    try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission to access location was denied');
-        setIsLocating(false);
-        return;
-      }
+    Alert.alert(
+      "Allow Location Access",
+      "UniMart uses your location to help the rider find your hostel/room for delivery.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK",
+          onPress: async () => {
+            setIsLocating(true);
+            try {
+              let { status } = await Location.requestForegroundPermissionsAsync();
+              if (status !== 'granted') {
+                Alert.alert('Permission to access location was denied');
+                setIsLocating(false);
+                return;
+              }
 
-      let location = await Location.getCurrentPositionAsync({});
-      let addressResponse = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      });
+              let location = await Location.getCurrentPositionAsync({});
+              let addressResponse = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+              });
 
-      if (addressResponse.length > 0) {
-        const addr = addressResponse[0];
-        // Construct a readable address string
-        const formattedAddress = [
-          addr.name,
-          addr.street,
-          addr.city,
-          addr.region
-        ].filter(Boolean).join(', ');
-        
-        setAddress(formattedAddress);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Could not fetch location');
-      console.error(error);
-    } finally {
-      setIsLocating(false);
-    }
+              if (addressResponse.length > 0) {
+                const addr = addressResponse[0];
+                // Construct a readable address string
+                const formattedAddress = [
+                  addr.name,
+                  addr.street,
+                  addr.city,
+                  addr.region
+                ].filter(Boolean).join(', ');
+                
+                setAddress(formattedAddress);
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Could not fetch location');
+              console.error(error);
+            } finally {
+              setIsLocating(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handlePayment = async () => {

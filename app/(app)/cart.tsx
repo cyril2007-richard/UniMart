@@ -1,72 +1,143 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, CheckSquare, Minus, Plus, ShoppingCart, Square, Trash2 } from 'lucide-react-native';
+import { Check, LogIn, Minus, Plus, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
+import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 
 export default function CartScreen() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, toggleSelection, toggleAllSelection } = useCart();
+  const { currentUser } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const theme = Colors.light;
 
   const allSelected = useMemo(() => cartItems.length > 0 && cartItems.every(item => item.selected), [cartItems]);
   const selectedCount = cartItems.filter(item => item.selected).length;
 
-  const renderCartItem = ({ item, index }: { item: any; index: number }) => (
-    <View style={[styles.cartItem, { borderTopWidth: index === 0 ? 0 : 1, borderColor: theme.surface }]}>
-      <TouchableOpacity onPress={() => toggleSelection(item.id)} style={styles.checkboxContainer}>
-        {item.selected ? (
-          <CheckSquare size={22} color={theme.purple} />
-        ) : (
-          <Square size={22} color={theme.tabIconDefault} />
-        )}
-      </TouchableOpacity>
-
-      <Image source={{ uri: item.image }} style={styles.productImage} />
-      <View style={styles.itemDetails}>
-        <Text style={[styles.productName, { color: theme.text }]} numberOfLines={2}>{item.name}</Text>
-        <Text style={[styles.productPrice, { color: theme.purple }]}>₦{item.price.toLocaleString()}</Text>
-        <View style={styles.quantityControl}>
-          <TouchableOpacity style={styles.quantityButton} onPress={() => updateQuantity(item.id, item.quantity - 1)}>
-            <Minus size={16} color={theme.purple} />
-          </TouchableOpacity>
-          <Text style={[styles.quantityText, { color: theme.text }]}>{item.quantity}</Text>
-          <TouchableOpacity style={styles.quantityButton} onPress={() => updateQuantity(item.id, item.quantity + 1)}>
-            <Plus size={16} color={theme.purple} />
-          </TouchableOpacity>
+  // --- Auth Guard ---
+  if (!currentUser) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color={theme.text} />
+        </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>My Cart</Text>
+            <View style={{ width: 24 }} />
+        </View>
+        
+        <View style={styles.centerContent}>
+            <View style={[styles.iconCircle, { backgroundColor: theme.surface }]}>
+                <LogIn size={40} color={theme.purple} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>Log in to View Cart</Text>
+            <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
+                Sign in to see your saved items and continue shopping.
+            </Text>
+            <TouchableOpacity 
+                style={[styles.primaryButton, { backgroundColor: theme.purple }]}
+                onPress={() => router.push('/(auth)/login')}
+                activeOpacity={0.8}
+            >
+                <Text style={styles.primaryButtonText}>Login / Sign Up</Text>
+            </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.removeButton}>
-        <Trash2 size={20} color={'#e74c3c'} />
+    );
+  }
+
+  // --- Render Item ---
+  const renderCartItem = ({ item }: { item: any }) => (
+    <View style={[styles.cartItem, { backgroundColor: theme.background, borderColor: theme.surface }]}>
+      
+      {/* Checkbox */}
+      <TouchableOpacity 
+        onPress={() => toggleSelection(item.id)} 
+        activeOpacity={0.7}
+        style={[
+            styles.checkbox, 
+            item.selected ? { backgroundColor: theme.purple, borderColor: theme.purple } : { borderColor: theme.secondaryText }
+        ]}
+      >
+        {item.selected && <Check size={14} color="white" strokeWidth={3} />}
       </TouchableOpacity>
+
+      {/* Image */}
+      <Image source={{ uri: item.image }} style={[styles.productImage, { backgroundColor: theme.surface }]} />
+      
+      {/* Details */}
+      <View style={styles.itemDetails}>
+        <View style={styles.itemHeader}>
+            <Text style={[styles.productName, { color: theme.text }]} numberOfLines={2}>{item.name}</Text>
+            <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.removeButton}>
+                <Trash2 size={18} color={theme.purple || '#FF4444'} />
+            </TouchableOpacity>
+        </View>
+        
+        <Text style={[styles.productPrice, { color: theme.purple }]}>₦{item.price.toLocaleString()}</Text>
+        
+        <View style={styles.itemFooter}>
+            <View style={[styles.quantityControl, { backgroundColor: theme.surface }]}>
+                <TouchableOpacity 
+                    style={styles.qtyBtn} 
+                    onPress={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                >
+                    <Minus size={16} color={theme.text} />
+                </TouchableOpacity>
+                <Text style={[styles.qtyText, { color: theme.text }]}>{item.quantity}</Text>
+                <TouchableOpacity 
+                    style={styles.qtyBtn} 
+                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                >
+                    <Plus size={16} color={theme.text} />
+                </TouchableOpacity>
+            </View>
+        </View>
+      </View>
     </View>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={theme.text} />
+      <StatusBar barStyle="dark-content" />
+      
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.text }]}>Cart</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>My Cart</Text>
         {cartItems.length > 0 ? (
             <TouchableOpacity onPress={() => toggleAllSelection(!allSelected)}>
-                <Text style={{ color: theme.purple, fontWeight: '600', fontSize: 16 }}>
-                    {allSelected ? 'Deselect All' : 'Select All'}
+                <Text style={[styles.actionText, { color: theme.purple }]}>
+                    {allSelected ? 'Deselect' : 'Select All'}
                 </Text>
             </TouchableOpacity>
         ) : (
-            <View style={{ width: 24 }} />
+            <View style={{ width: 60 }} /> // Spacer to balance header
         )}
       </View>
 
+      {/* Content */}
       {cartItems.length === 0 ? (
-        <View style={styles.emptyCartContainer}>
-          <ShoppingCart size={80} color={theme.secondaryText} strokeWidth={1} />
-          <Text style={[styles.emptyCartText, { color: theme.secondaryText }]}>Your cart is empty</Text>
-          <TouchableOpacity style={[styles.shopNowButton, { backgroundColor: theme.purple }]} onPress={() => router.push('/(app)/(tabs)/shop')}>
-            <Text style={styles.shopNowButtonText}>Shop Now</Text>
+        <View style={styles.centerContent}>
+          <View style={[styles.iconCircle, { backgroundColor: theme.surface }]}>
+             <ShoppingBag size={48} color={theme.secondaryText} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Your Cart is Empty</Text>
+          <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
+            Looks like you haven't added anything yet.
+          </Text>
+          <TouchableOpacity 
+            style={[styles.primaryButton, { backgroundColor: theme.purple }]} 
+            onPress={() => router.push('/(app)/(tabs)/shop')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>Start Shopping</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -77,23 +148,39 @@ export default function CartScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.cartList}
             showsVerticalScrollIndicator={false}
+            ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           />
-          <View style={[styles.footer, { borderTopColor: theme.surface }]}>
-            <View style={styles.totalContainer}>
-              <Text style={[styles.totalText, { color: theme.secondaryText }]}>Total</Text>
-              <Text style={[styles.totalAmount, { color: theme.text }]}>₦{getCartTotal().toLocaleString()}</Text>
+          
+          {/* Footer */}
+          <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: 'rgba(0,0,0,0.05)' }]}>
+            <View style={styles.totalRow}>
+                <View>
+                    <Text style={[styles.totalLabel, { color: theme.secondaryText }]}>Total</Text>
+                    <Text style={[styles.totalAmount, { color: theme.text }]}>₦{getCartTotal().toLocaleString()}</Text>
+                </View>
+                <View style={styles.selectedInfo}>
+                     <Text style={[styles.selectedText, { color: theme.secondaryText }]}>
+                        {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
+                     </Text>
+                </View>
             </View>
+            
             <TouchableOpacity 
               style={[
                 styles.checkoutButton, 
-                { backgroundColor: selectedCount > 0 ? theme.purple : theme.tabIconDefault }
+                { backgroundColor: selectedCount > 0 ? theme.purple : theme.surface }
               ]}
               disabled={selectedCount === 0}
               onPress={() => router.push('/checkout')}
+              activeOpacity={0.8}
             >
-              <Text style={styles.checkoutButtonText}>
-                Checkout ({selectedCount})
+              <Text style={[
+                  styles.checkoutButtonText, 
+                  { color: selectedCount > 0 ? 'white' : theme.secondaryText }
+              ]}>
+                Checkout
               </Text>
+              {selectedCount > 0 && <ShoppingCart size={20} color="white" />}
             </TouchableOpacity>
           </View>
         </>
@@ -103,122 +190,155 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  checkboxContainer: {
-    marginRight: 12,
-    justifyContent: 'center',
-  },
-  backButton: {
-    padding: 4,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  emptyCartContainer: {
+  backButton: { padding: 4 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
+  actionText: { fontSize: 15, fontWeight: '600' },
+
+  // Empty/Auth State
+  centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 40,
+    marginTop: -40,
   },
-  emptyCartText: {
-    fontSize: 17,
-    marginTop: 20,
-    marginBottom: 24,
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
-  shopNowButton: {
+  emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  emptySub: { fontSize: 15, textAlign: 'center', marginBottom: 30, lineHeight: 22 },
+  primaryButton: {
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
   },
-  shopNowButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cartList: {
-    paddingHorizontal: 24,
-  },
+  primaryButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+
+  // Cart List
+  cartList: { padding: 16 },
   cartItem: {
     flexDirection: 'row',
-    paddingVertical: 16,
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 16,
+    // Add simple shadow or border
+    borderWidth: 1,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   productImage: {
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: Colors.light.surface,
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 12,
+    height: 80, // Match image height for vertical alignment
     justifyContent: 'space-between',
   },
-  productName: {
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 22,
+  itemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  productPrice: {
+  productName: {
     fontSize: 15,
-    fontWeight: '700',
-    marginVertical: 4,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 8,
+    lineHeight: 20,
+  },
+  removeButton: { padding: 4, marginTop: -4 },
+  productPrice: { fontSize: 16, fontWeight: '700' },
+  
+  itemFooter: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      marginTop: 4,
   },
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 8,
+    padding: 2,
   },
-  quantityButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.light.surface,
+  qtyBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'white', // Inner button contrast
+    margin: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
   },
-  quantityText: {
-    fontSize: 16,
+  qtyText: {
+    fontSize: 14,
     fontWeight: '600',
-    marginHorizontal: 16,
+    minWidth: 24,
+    textAlign: 'center',
   },
-  removeButton: {
-    padding: 8,
-    marginLeft: 16,
-  },
+
+  // Footer
   footer: {
+    padding: 20,
+    paddingBottom: 34,
     borderTopWidth: 1,
-    padding: 24,
-    paddingBottom: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 10,
   },
-  totalContainer: {
+  totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  totalText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  totalAmount: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
+  totalLabel: { fontSize: 14, marginBottom: 4 },
+  totalAmount: { fontSize: 24, fontWeight: '700' },
+  selectedInfo: { justifyContent: 'center' },
+  selectedText: { fontSize: 13 },
+  
   checkoutButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 8,
   },
   checkoutButtonText: {
-    color: 'white',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

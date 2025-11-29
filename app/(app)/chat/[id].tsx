@@ -16,7 +16,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from "react-native";
 import Colors from "../../../constants/Colors";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -129,18 +130,30 @@ export default function ConversationScreen() {
   };
 
   const handleCamera = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (permission.granted === false) {
-        alert("You've refused to allow this app to access your camera!");
-        return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-        quality: 0.7,
-    });
+    Alert.alert(
+      "Camera Access Required",
+      "UniMart needs access to your camera so you can take and send photos of items directly in the chat.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Continue",
+          onPress: async () => {
+            const permission = await ImagePicker.requestCameraPermissionsAsync();
+            if (permission.granted === false) {
+                alert("You've refused to allow this app to access your camera!");
+                return;
+            }
+            const result = await ImagePicker.launchCameraAsync({
+                quality: 0.7,
+            });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-        await sendImageMessage(result.assets[0].uri);
-    }
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                await sendImageMessage(result.assets[0].uri);
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (!chat || !otherUser) return null;
