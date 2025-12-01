@@ -5,6 +5,9 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   StatusBar,
   StyleSheet,
   Text,
@@ -104,73 +107,84 @@ export default function SearchScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Header & Search Bar */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
-        <View style={styles.searchRow}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <ArrowLeft size={24} color={theme.text} />
-            </TouchableOpacity>
-            
-            <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
-                <Search size={20} color={theme.secondaryText} style={styles.searchIcon} />
-                <TextInput
-                    style={[styles.searchInput, { color: theme.text }]}
-                    placeholder="Search products..."
-                    placeholderTextColor={theme.secondaryText}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    autoFocus
-                    returnKeyType="search"
-                />
-                {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                        <X size={16} color="white" />
-                    </TouchableOpacity>
-                )}
-            </View>
-        </View>
-
-        {/* Category Filter List */}
-        <View style={styles.filterContainer}>
-            <FlatList
-                data={categoryList}
-                renderItem={renderCategoryChip}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryListContent}
-                keyExtractor={(item) => item.id}
-            />
-        </View>
-      </View>
-
-      {/* Results */}
-      <View style={styles.contentContainer}>
-        {filteredListings.length === 0 ? (
-            <View style={styles.emptyContainer}>
-                <View style={[styles.emptyIconCircle, { backgroundColor: theme.surface }]}>
-                    <Search size={40} color={theme.secondaryText} />
+      {/* KeyboardAvoidingView fixes the iOS issue where the keyboard 
+         covers the bottom of the list or pushes content up incorrectly.
+      */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        style={{ flex: 1 }}
+      >
+        {/* Header & Search Bar */}
+        <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+            <View style={styles.searchRow}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <ArrowLeft size={24} color={theme.text} />
+                </TouchableOpacity>
+                
+                <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
+                    <Search size={20} color={theme.secondaryText} style={styles.searchIcon} />
+                    <TextInput
+                        style={[styles.searchInput, { color: theme.text }]}
+                        placeholder="Search products..."
+                        placeholderTextColor={theme.secondaryText}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        autoFocus
+                        returnKeyType="search"
+                        onSubmitEditing={Keyboard.dismiss}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                            <X size={16} color="white" />
+                        </TouchableOpacity>
+                    )}
                 </View>
-                <Text style={[styles.emptyTitle, { color: theme.text }]}>No products found</Text>
-                <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
-                    Try adjusting your search or category filter.
-                </Text>
             </View>
-        ) : (
-            <FlatList
-                data={filteredListings}
-                renderItem={renderListingItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.resultsList}
-                showsVerticalScrollIndicator={false}
-                keyboardDismissMode="on-drag"
-                ListHeaderComponent={
-                    <Text style={[styles.resultsCount, { color: theme.secondaryText }]}>
-                        {filteredListings.length} results found
+
+            {/* Category Filter List */}
+            <View style={styles.filterContainer}>
+                <FlatList
+                    data={categoryList}
+                    renderItem={renderCategoryChip}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoryListContent}
+                    keyExtractor={(item) => item.id}
+                    keyboardShouldPersistTaps="handled"
+                />
+            </View>
+        </View>
+
+        {/* Results */}
+        <View style={styles.contentContainer}>
+            {filteredListings.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <View style={[styles.emptyIconCircle, { backgroundColor: theme.surface }]}>
+                        <Search size={40} color={theme.secondaryText} />
+                    </View>
+                    <Text style={[styles.emptyTitle, { color: theme.text }]}>No products found</Text>
+                    <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
+                        Try adjusting your search or category filter.
                     </Text>
-                }
-            />
-        )}
-      </View>
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredListings}
+                    renderItem={renderListingItem}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.resultsList}
+                    showsVerticalScrollIndicator={false}
+                    keyboardDismissMode="on-drag"
+                    keyboardShouldPersistTaps="handled"
+                    ListHeaderComponent={
+                        <Text style={[styles.resultsCount, { color: theme.secondaryText }]}>
+                            {filteredListings.length} results found
+                        </Text>
+                    }
+                />
+            )}
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }

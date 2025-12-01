@@ -88,7 +88,6 @@ export default function ShopScreen() {
         ]}
         activeOpacity={0.8}
       >
-        {isSelected && <View style={[styles.activeIndicator, { backgroundColor: theme.purple }]} />}
         <Text
           numberOfLines={2}
           style={[
@@ -109,10 +108,7 @@ export default function ShopScreen() {
       activeOpacity={0.7}
       onPress={() => router.push(`/product-screen?categoryId=${selectedCategory}&subcategory=${encodeURIComponent(item)}`)}
     >
-      <View style={[styles.iconContainer, { backgroundColor: theme.surface }]}>
-        {/* Placeholder Icon - In a real app, this would be item.image */}
-        <Package color={theme.purple} size={24} strokeWidth={1.5} />
-      </View>
+      <View style={[styles.iconContainer, { backgroundColor: '#fff', borderRadius: 0 }]} />
       <Text numberOfLines={2} style={[styles.gridText, { color: theme.text }]}>{item}</Text>
     </TouchableOpacity>
   );
@@ -155,6 +151,7 @@ export default function ShopScreen() {
                 renderItem={renderSidebarItem}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.sidebarContent}
+                style={{ flex: 1 }}
             />
         </View>
 
@@ -168,6 +165,7 @@ export default function ShopScreen() {
                     columnWrapperStyle={styles.gridRow}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.gridContent}
+                    style={{ flex: 1 }}
                     ListHeaderComponent={
                         <View style={styles.sectionHeader}>
                             <Text style={[styles.sectionTitle, { color: theme.text }]}>{currentCategory.name}</Text>
@@ -220,7 +218,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
+    height: 20,
     borderRadius: 12,
     paddingHorizontal: 12,
   },

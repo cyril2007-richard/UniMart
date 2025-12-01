@@ -157,33 +157,38 @@ export default function CheckoutScreen() {
           itemsBySeller[item.sellerId].push(item);
       });
 
-      // Send notification to each seller
-      for (const sellerId in itemsBySeller) {
-          const sellerItems = itemsBySeller[sellerId];
-          const itemNames = sellerItems.map(i => i.name || i.title).join(', ');
-          const totalAmount = sellerItems.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
-          
-          try {
-              const notificationsRef = collection(db, 'users', sellerId, 'notifications');
-              await addDoc(notificationsRef, {
-                  message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}.`,
-                  type: 'success',
-                  read: false,
-                  createdAt: serverTimestamp()
-              });
-          } catch (error) {
-              console.error(`Failed to notify seller ${sellerId}`, error);
+          // Send notification to each seller
+          for (const sellerId in itemsBySeller) {
+              const sellerItems = itemsBySeller[sellerId];
+              const itemNames = sellerItems.map(i => i.name || i.title).join(', ');
+              const totalAmount = sellerItems.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
+              
+              try {
+                  const notificationsRef = collection(db, 'users', sellerId, 'notifications');
+                  await addDoc(notificationsRef, {
+                      message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}.`,
+                      type: 'success',
+                      read: false,
+                      createdAt: serverTimestamp()
+                  });
+              } catch (error: any) {
+                  // Silently fail if permissions are missing to avoid interrupting the checkout flow
+                  if (error.code === 'permission-denied') {
+                    console.warn(`Permission denied sending notification to seller ${sellerId}. Check Firestore rules.`);
+                  } else {
+                    console.error(`Failed to notify seller ${sellerId}`, error);
+                  }
+              }
           }
-      }
 
-      setIsProcessing(false);
+          setIsProcessing(false);
 
-      if (!buyNowItem) {
-        await clearCart(); // Only clear cart if it was a cart checkout
-      }
-      router.replace('/payment-success');
-    }, 2000);
-  };
+          if (!buyNowItem) {
+            await clearCart(); // Only clear cart if it was a cart checkout
+          }
+          router.replace('/payment-success');
+        }, 2000);
+      };
 
   const renderPaymentContent = () => {
     switch (paymentMethod) {

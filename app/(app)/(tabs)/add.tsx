@@ -298,11 +298,21 @@ export default function AddScreen() {
       </KeyboardAvoidingView>
 
       {/* Category Modal */}
-      <Modal visible={catModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setCatModal(false)} />
-            <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
-                <View style={styles.modalHeader}>
+      <Modal 
+        visible={catModal} 
+        transparent={Platform.OS !== 'android'} 
+        animationType="slide"
+        onRequestClose={() => setCatModal(false)}
+      >
+        <View style={Platform.OS === 'android' ? styles.modalOverlayAndroid : styles.modalOverlay}>
+            {Platform.OS !== 'android' && (
+              <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setCatModal(false)} />
+            )}
+            <View style={[
+              Platform.OS === 'android' ? styles.modalContentAndroid : styles.modalContent, 
+              {backgroundColor: theme.background}
+            ]}>
+                <View style={[styles.modalHeader, Platform.OS === 'android' && { paddingTop: 16 }]}>
                     <Text style={[styles.modalTitle, {color: theme.text}]}>Select Category</Text>
                     <TouchableOpacity style={styles.modalClose} onPress={() => setCatModal(false)}>
                         <X size={20} color={theme.text} />
@@ -330,11 +340,21 @@ export default function AddScreen() {
       </Modal>
 
       {/* Subcategory Modal */}
-      <Modal visible={subModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setSubModal(false)} />
-            <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
-                <View style={styles.modalHeader}>
+      <Modal 
+        visible={subModal} 
+        transparent={Platform.OS !== 'android'} 
+        animationType="slide"
+        onRequestClose={() => setSubModal(false)}
+      >
+        <View style={Platform.OS === 'android' ? styles.modalOverlayAndroid : styles.modalOverlay}>
+            {Platform.OS !== 'android' && (
+              <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setSubModal(false)} />
+            )}
+            <View style={[
+              Platform.OS === 'android' ? styles.modalContentAndroid : styles.modalContent, 
+              {backgroundColor: theme.background}
+            ]}>
+                <View style={[styles.modalHeader, Platform.OS === 'android' && { paddingTop: 16 }]}>
                     <Text style={[styles.modalTitle, {color: theme.text}]}>Select Subcategory</Text>
                     <TouchableOpacity style={styles.modalClose} onPress={() => setSubModal(false)}>
                         <X size={20} color={theme.text} />
@@ -431,8 +451,10 @@ const styles = StyleSheet.create({
 
   // Modals
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
+  modalOverlayAndroid: { flex: 1 },
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 40, maxHeight: '80%' },
+  modalContentAndroid: { flex: 1 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
   modalTitle: { fontSize: 18, fontWeight: '700' },
   modalClose: { padding: 4, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 20 },

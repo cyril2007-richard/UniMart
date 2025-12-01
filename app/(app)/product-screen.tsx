@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
+    height: 20,
     borderRadius: 12,
     paddingHorizontal: 12,
   },

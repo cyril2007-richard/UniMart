@@ -5,10 +5,10 @@ import {
   ChevronDown,
   ChevronUp,
   MapPin,
-  Package,
   Search,
+  ShoppingBag,
   ShoppingCart,
-  TrendingUp
+  Store
 } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import {
@@ -40,12 +40,9 @@ export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showQuickActions, setShowQuickActions] = useState(true);
   
-  // Use real listings instead of placeholder data
   const { listings } = useListings();
-  // Get the first 5 listings for the "Fresh Finds" section
   const recentListings = listings.slice(0, 5);
 
-  // Mock Data for Carousel (typically these are static or fetched from a specific ads endpoint)
   const sponsors = [
     {
       id: 1,
@@ -189,23 +186,30 @@ export default function HomeScreen() {
           
           {showQuickActions && (
             <View style={styles.quickActionGrid}>
+              
+              {/* How to Buy */}
               <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: theme.surface }]} onPress={() => router.push('/how-to-buy')}>
                   <View style={[styles.iconCircle, { backgroundColor: '#E3F2FD' }]}>
-                      <TrendingUp color="#2196F3" size={24} />
+                      {/* Replaced TrendingUp with ShoppingBag */}
+                      <ShoppingBag color="#2196F3" size={24} strokeWidth={2} />
                   </View>
                   <Text style={[styles.quickActionText, { color: theme.text }]}>How to Buy</Text>
               </TouchableOpacity>
 
+              {/* Start Selling */}
               <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: theme.surface }]} onPress={() => router.push('/how-to-sell')}>
                   <View style={[styles.iconCircle, { backgroundColor: '#E8F5E9' }]}>
-                      <Package color="#4CAF50" size={24} />
+                      {/* Replaced Package with Store */}
+                      <Store color="#4CAF50" size={24} strokeWidth={2} />
                   </View>
                   <Text style={[styles.quickActionText, { color: theme.text }]}>Start Selling</Text>
               </TouchableOpacity>
 
+              {/* Rider Job */}
               <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: theme.surface }]} onPress={() => router.push('/apply')}>
                   <View style={[styles.iconCircle, { backgroundColor: '#FFF3E0' }]}>
-                      <Bike color="#FF9800" size={24} />
+                      {/* Bike is iconic for Riders */}
+                      <Bike color="#FF9800" size={24} strokeWidth={2} />
                   </View>
                   <Text style={[styles.quickActionText, { color: theme.text }]}>Rider Job</Text>
               </TouchableOpacity>

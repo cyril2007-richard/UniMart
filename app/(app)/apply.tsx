@@ -1,156 +1,280 @@
 import { useRouter } from 'expo-router';
-import { Bike, CheckCircle, ChevronLeft, Mail } from 'lucide-react-native';
+import { ArrowRight, Bike, Check, ChevronLeft, Mail, ShieldCheck } from 'lucide-react-native';
 import React from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Linking,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 
 export default function ApplyScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const theme = Colors.light;
 
   const handleEmail = () => {
     Linking.openURL('mailto:riders@unimart.com?subject=Rider Application&body=Name:%0AStudent ID:%0AIntroduction:');
   };
 
+  const requirements = [
+    'A bicycle or scooter in good condition',
+    'A valid student ID card',
+    'Smartphone with data connection',
+    'Friendly and reliable attitude'
+  ];
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle="dark-content" />
+      
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Become a Rider</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Rider Application</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={[styles.iconContainer, { backgroundColor: theme.lightPurple }]}>
-            <Bike size={60} color={theme.purple} strokeWidth={1.5} />
+          <View style={[styles.heroIconCircle, { backgroundColor: theme.surface }]}>
+            <Bike size={48} color={theme.purple} strokeWidth={1.5} />
           </View>
-          <Text style={[styles.title, { color: theme.text }]}>Join our team!</Text>
-          <Text style={[styles.subtitle, { color: theme.secondaryText }]}>
-            Deliver items across campus and earn money on your own schedule.
+          <Text style={[styles.heroTitle, { color: theme.text }]}>Earn While You Study</Text>
+          <Text style={[styles.heroSubtitle, { color: theme.secondaryText }]}>
+            Join the UniMart fleet. Deliver items across campus on your own schedule and get paid instantly.
           </Text>
         </View>
 
+        {/* Requirements Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Requirements</Text>
-          <View style={styles.requirementsList}>
-            {[
-              'A bicycle or scooter in good condition',
-              'A valid student ID',
-              'A smartphone with the UniMart app',
-              'A friendly and reliable attitude'
-            ].map((req, index) => (
-              <View key={index} style={styles.requirementItem}>
-                <CheckCircle size={20} color={theme.purple} />
-                <Text style={[styles.requirementText, { color: theme.secondaryText }]}>{req}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>What You Need</Text>
+          <View style={styles.requirementsGrid}>
+            {requirements.map((req, index) => (
+              <View key={index} style={[styles.reqCard, { backgroundColor: theme.surface }]}>
+                <View style={[styles.checkCircle, { backgroundColor: theme.purple }]}>
+                    <Check size={14} color="white" strokeWidth={3} />
+                </View>
+                <Text style={[styles.reqText, { color: theme.text }]}>{req}</Text>
               </View>
             ))}
           </View>
         </View>
 
+        {/* Process Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>How to Apply</Text>
-          <Text style={[styles.description, { color: theme.secondaryText }]}>
-            To apply, please send an email to riders@unimart.com with your name, student ID, and a brief introduction.
-          </Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>How It Works</Text>
+          <View style={[styles.processCard, { backgroundColor: theme.surface }]}>
+             <View style={styles.processStep}>
+                <View style={styles.stepNumber}><Text style={styles.stepNumText}>1</Text></View>
+                <Text style={[styles.stepText, { color: theme.text }]}>Send your application</Text>
+             </View>
+             <View style={styles.stepLine} />
+             <View style={styles.processStep}>
+                <View style={styles.stepNumber}><Text style={styles.stepNumText}>2</Text></View>
+                <Text style={[styles.stepText, { color: theme.text }]}>Get verified in 24hrs</Text>
+             </View>
+             <View style={styles.stepLine} />
+             <View style={styles.processStep}>
+                <View style={styles.stepNumber}><Text style={styles.stepNumText}>3</Text></View>
+                <Text style={[styles.stepText, { color: theme.text }]}>Start accepting orders</Text>
+             </View>
+          </View>
         </View>
 
+        {/* Trust Badge */}
+        <View style={[styles.trustBadge, { backgroundColor: 'rgba(39, 174, 96, 0.1)' }]}>
+            <ShieldCheck size={20} color="#27ae60" />
+            <Text style={styles.trustText}>Secure Payments & Verified IDs</Text>
+        </View>
+
+      </ScrollView>
+
+      {/* Sticky Footer */}
+      <View style={[styles.footer, { backgroundColor: theme.background, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity 
           style={[styles.applyButton, { backgroundColor: theme.purple }]} 
           activeOpacity={0.8}
           onPress={handleEmail}
         >
-          <Mail color={theme.white} size={20} style={{ marginRight: 10 }} />
-          <Text style={[styles.applyButtonText, { color: theme.white }]}>Send Application</Text>
+          <Mail color="white" size={20} />
+          <Text style={styles.applyButtonText}>Apply via Email</Text>
+          <ArrowRight color="white" size={20} />
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 40,
     paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingBottom: 12,
+    backgroundColor: 'transparent',
   },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
+  backButton: { padding: 4 },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
+
+  // Scroll Content
   scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 120, // Space for footer
   },
+
+  // Hero
   heroSection: {
     alignItems: 'center',
-    marginVertical: 30,
+    marginTop: 20,
+    marginBottom: 40,
   },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  heroIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: '800',
     marginBottom: 10,
+    textAlign: 'center',
   },
-  subtitle: {
+  heroSubtitle: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+    maxWidth: '90%',
   },
-  section: {
-    marginBottom: 24,
-  },
+
+  // Sections
+  section: { marginBottom: 32 },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 16,
   },
-  requirementsList: {
-    gap: 16,
-  },
-  requirementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  // Requirements Grid
+  requirementsGrid: {
     gap: 12,
   },
-  requirementText: {
-    fontSize: 15,
-    flex: 1,
-    lineHeight: 22,
+  reqCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
   },
-  description: {
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  reqText: {
     fontSize: 15,
-    lineHeight: 24,
+    fontWeight: '500',
+    flex: 1,
+  },
+
+  // Process Steps
+  processCard: {
+    padding: 20,
+    borderRadius: 20,
+  },
+  processStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.light.text,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  stepNumText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  stepText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  stepLine: {
+    width: 2,
+    height: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginLeft: 14, // Center with circle
+    marginVertical: 4,
+  },
+
+  // Trust Badge
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+    alignSelf: 'center',
+  },
+  trustText: {
+    color: '#27ae60',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+
+  // Footer
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   applyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 10,
+    borderRadius: 16,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   applyButtonText: {
+    color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

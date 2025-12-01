@@ -2,6 +2,7 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import mockData from '../constants/mockData';
 
 export interface Category {
   id: string;
@@ -29,11 +30,18 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
         const categoriesCollection = collection(db, 'categories');
         const categoriesSnapshot = await getDocs(categoriesCollection);
         const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-        // Sort categories by priorityScore in descending order
-        categoriesData.sort((a, b) => b.priorityScore - a.priorityScore);
-        setCategories(categoriesData);
+        
+        if (categoriesData.length > 0) {
+          // Sort categories by priorityScore in descending order
+          categoriesData.sort((a, b) => b.priorityScore - a.priorityScore);
+          setCategories(categoriesData);
+        } else {
+          console.log("No categories found in DB, using mock data.");
+          setCategories(mockData);
+        }
       } catch (error) {
-        console.error("Error fetching categories: ", error);
+        console.error("Error fetching categories, using mock data: ", error);
+        setCategories(mockData);
       } finally {
         setLoading(false);
       }
