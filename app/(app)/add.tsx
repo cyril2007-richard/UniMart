@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Camera, ChevronDown, ChevronRight, UploadCloud, X, XCircle } from 'lucide-react-native';
+import { Camera, ChevronDown, ChevronRight, UploadCloud, X, XCircle, BadgeCheck } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,10 +20,10 @@ import {
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '../../../constants/Colors';
-import { useAuth } from '../../../contexts/AuthContext';
-import { Category, useCategories } from '../../../contexts/CategoryContext';
-import { useListings } from '../../../contexts/ListingsContext';
+import Colors from '../../constants/Colors';
+import { useAuth } from '../../contexts/AuthContext';
+import { Category, useCategories } from '../../contexts/CategoryContext';
+import { useListings } from '../../contexts/ListingsContext';
 
 const { width } = Dimensions.get('window');
 const GAP = 12;
@@ -160,6 +160,22 @@ export default function AddScreen() {
         <Text style={[styles.loginText, {color: theme.secondaryText}]}>Log in to post items on UniMart.</Text>
         <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.purple}]} onPress={() => router.push('/(auth)/login')}>
           <Text style={styles.loginBtnText}>Login or Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Verification Guard
+  if (!currentUser.isVerified) {
+    return (
+      <View style={[styles.center, {backgroundColor: theme.background}]}>
+        <View style={[styles.loginIcon, { backgroundColor: theme.lightPurple || '#F3E8FF' }]}>
+            <BadgeCheck size={48} color={theme.purple} />
+        </View>
+        <Text style={[styles.loginTitle, {color: theme.text}]}>Get Verified</Text>
+        <Text style={[styles.loginText, {color: theme.secondaryText}]}>You need to verify your student identity before you can start selling on UniMart.</Text>
+        <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.purple}]} onPress={() => router.push('/(app)/verify')}>
+          <Text style={styles.loginBtnText}>Verify Now</Text>
         </TouchableOpacity>
       </View>
     );

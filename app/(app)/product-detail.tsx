@@ -4,13 +4,13 @@ import {
   ArrowLeft,
   ChevronRight,
   Heart,
-  MessageCircle,
   Phone,
   Share2,
   ShieldCheck,
   ShoppingCart,
   Star,
-  X
+  X,
+  BadgeCheck
 } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -64,7 +64,6 @@ export default function ProductDetailScreen() {
   const [newReview, setNewReview] = useState('');
   const [newRating, setNewRating] = useState(0);
   const [showAddedToCartMessage, setShowAddedToCartMessage] = useState(false);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Contexts
@@ -162,75 +161,6 @@ export default function ProductDetailScreen() {
     });
   };
 
-  const handleMessageSeller = async () => {
-    if (!currentUser || !seller || isCreatingChat) {
-      addNotification('You need to be logged in to chat.', 'error');
-      return;
-    }
-    setIsCreatingChat(true);
-    try {
-        // ... (Keep existing chat logic)
-        const chatsRef = collection(db, 'chats');
-        const q = query(chatsRef, where('participants', 'array-contains', currentUser.id));
-        const querySnapshot = await getDocs(q);
-        let existingChat: any = null;
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.participants.includes(seller.id)) existingChat = { id: doc.id, ...data };
-        });
-
-        let chatId;
-        if (existingChat) {
-            chatId = existingChat.id;
-        } else {
-            const sortedParticipants = [currentUser.id, seller.id].sort();
-            const newChatRef = await addDoc(chatsRef, {
-                participants: sortedParticipants,
-                lastMessage: '',
-                lastUpdatedAt: serverTimestamp(),
-                users: {
-                    [currentUser.id]: { name: currentUser.name, avatar: currentUser.profilePicture },
-                    [seller.id]: { name: seller.name, avatar: seller.profilePicture }
-                }
-            });
-            // Update interactions logic omitted for brevity but should remain
-            const currentUserInteractionsRef = doc(db, 'users', currentUser.id, 'interactions', seller.id);
-            await setDoc(currentUserInteractionsRef, { name: seller.name, avatar: seller.profilePicture, chatId: newChatRef.id });
-            const sellerInteractionsRef = doc(db, 'users', seller.id, 'interactions', currentUser.id);
-            await setDoc(sellerInteractionsRef, { name: currentUser.name, avatar: currentUser.profilePicture, chatId: newChatRef.id });
-            
-            chatId = newChatRef.id;
-        }
-
-        // Context Message Logic
-        const messagesRef = collection(db, 'chats', chatId, 'messages');
-        const lastMsgQuery = query(messagesRef, orderBy('createdAt', 'desc'), limit(1));
-        const lastMsgSnapshot = await getDocs(lastMsgQuery);
-        let shouldSendContext = true;
-        if (!lastMsgSnapshot.empty) {
-            const lastMsg = lastMsgSnapshot.docs[0].data();
-            if (lastMsg.type === 'product-context' && lastMsg.productId === product.id) shouldSendContext = false;
-        }
-
-        if (shouldSendContext) {
-            await addDoc(messagesRef, {
-                type: 'product-context',
-                productId: product.id,
-                productTitle: product.title,
-                productPrice: product.price,
-                productImage: product.images[0],
-                senderId: currentUser.id,
-                createdAt: serverTimestamp()
-            });
-        }
-        router.push(`/chat/${chatId}`);
-    } catch (error) {
-      addNotification('Failed to start chat.', 'error');
-    } finally {
-      setIsCreatingChat(false);
-    }
-  };
-
   const handleAddReview = async () => {
     if (!currentUser) return Alert.alert('Error', 'Login required.');
     if (newRating === 0 || newReview.trim() === '') return Alert.alert('Error', 'Rating and comment required.');
@@ -285,7 +215,7 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
         <View style={styles.headerRight}>
             <TouchableOpacity style={styles.circleBtn} onPress={() => setIsFavorite(!isFavorite)}>
-                <Heart color={isFavorite ? '#FF4444' : theme.text} fill={isFavorite ? '#FF4444' : 'none'} size={22} />
+                <Heart color={isFavorite ? theme.purple : theme.text} fill={isFavorite ? theme.purple : 'none'} size={22} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.circleBtn}>
                 <Share2 color={theme.text} size={22} />
@@ -344,8 +274,11 @@ export default function ProductDetailScreen() {
             >
                 <Image source={{ uri: seller.profilePicture }} style={styles.sellerAvatar} />
                 <View style={styles.sellerInfo}>
-                    <Text style={[styles.sellerName, { color: theme.text }]}>{seller.name}</Text>
-                    <Text style={[styles.sellerRole, { color: theme.secondaryText }]}>Verified Seller</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={[styles.sellerName, { color: theme.text }]}>{seller.name}</Text>
+                        {seller.isVerified && <BadgeCheck size={16} color={theme.purple} />}
+                    </View>
+                    <Text style={[styles.sellerRole, { color: theme.secondaryText }]}>{seller.isVerified ? 'Verified Seller' : 'Student Seller'}</Text>
                 </View>
                 <View style={styles.iconButton}>
                     <ChevronRight color={theme.secondaryText} size={20} />
@@ -361,16 +294,12 @@ export default function ProductDetailScreen() {
             </Text>
           </View>
             
-          {/* Action Grid (Call/Chat) */}
+          {/* Action Grid */}
           {currentUser?.id !== product.sellerId && (
             <View style={styles.actionGrid}>
                 <TouchableOpacity style={[styles.gridActionBtn, { backgroundColor: theme.surface }]} onPress={handleCall}>
                     <Phone color={theme.purple} size={24} />
                     <Text style={[styles.gridActionText, { color: theme.purple }]}>Call Seller</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.gridActionBtn, { backgroundColor: theme.surface }]} onPress={handleMessageSeller} disabled={isCreatingChat}>
-                    {isCreatingChat ? <ActivityIndicator color={theme.purple} /> : <MessageCircle color={theme.purple} size={24} />}
-                    <Text style={[styles.gridActionText, { color: theme.purple }]}>Chat</Text>
                 </TouchableOpacity>
             </View>
           )}
@@ -635,5 +564,5 @@ const styles = StyleSheet.create({
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { fontSize: 18, marginBottom: 20 },
   backButtonSimple: { padding: 10 },
-  backButtonText: { fontSize: 16, color: '#007AFF' }
+  backButtonText: { fontSize: 16, color: '#6B21A8' }
 });

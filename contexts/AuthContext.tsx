@@ -22,11 +22,12 @@ type User = {
   phoneNumber: string;
   followers: number;
   following: number;
+  isVerified: boolean;
 };
 
 // --- FIX: Create a simpler, more accurate type for new user data ---
 // This includes all User fields except the auto-generated ones, plus password
-type SignUpData = Omit<User, 'id' | 'followers' | 'following'> & {
+type SignUpData = Omit<User, 'id' | 'followers' | 'following' | 'isVerified'> & {
   password?: string; // Password is required for signup
 };
 // --- End of FIX ---
@@ -38,6 +39,7 @@ type AuthContextType = {
   signup: (newUser: SignUpData) => Promise<boolean>; // <-- FIX: Use the new SignUpData type
   logout: () => Promise<void>;
   updateProfile: (userId: string, username: string, profilePictureUri?: string) => Promise<boolean>;
+  setVerified: (userId: string, isVerified: boolean) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -125,6 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         phoneNumber: newUser.phoneNumber,
         followers: 0,
         following: 0,
+        isVerified: false,
       };
 
       await setDoc(doc(db, 'users', firebaseUser.uid), userToAdd); // <-- FIX: Use imported setDoc and doc
@@ -178,8 +181,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setVerified = async (userId: string, isVerified: boolean): Promise<boolean> => {
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, {
+        isVerified: isVerified,
+      });
+
+      if (currentUser && currentUser.id === userId) {
+        setCurrentUser(prev => prev ? { ...prev, isVerified } : null);
+      }
+      return true;
+    } catch (error) {
+      console.error('Error setting verified status:', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ currentUser, loading, login, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={{ currentUser, loading, login, signup, logout, updateProfile, setVerified }}>
       {!loading && children}
     </AuthContext.Provider>
   );

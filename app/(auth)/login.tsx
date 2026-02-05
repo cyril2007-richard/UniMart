@@ -155,6 +155,16 @@ export default function LoginScreen() {
           >
             <Text style={[styles.skipText, { color: theme.secondaryText }]}>Continue as Guest</Text>
           </TouchableOpacity>
+
+          <View style={styles.helpLinks}>
+            <TouchableOpacity onPress={() => router.push('/how-to-buy')}>
+              <Text style={[styles.helpLinkText, { color: theme.purple }]}>How to Buy</Text>
+            </TouchableOpacity>
+            <View style={[styles.helpDivider, { backgroundColor: theme.secondaryText }]} />
+            <TouchableOpacity onPress={() => router.push('/how-to-sell')}>
+              <Text style={[styles.helpLinkText, { color: theme.purple }]}>How to Sell</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -317,5 +327,21 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  helpLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
+  helpLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  helpDivider: {
+    width: 1,
+    height: 16,
+    opacity: 0.3,
   },
 });

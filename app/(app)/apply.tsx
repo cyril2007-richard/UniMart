@@ -64,7 +64,7 @@ export default function ApplyScreen() {
             {requirements.map((req, index) => (
               <View key={index} style={[styles.reqCard, { backgroundColor: theme.surface }]}>
                 <View style={[styles.checkCircle, { backgroundColor: theme.purple }]}>
-                    <Check size={14} color="white" strokeWidth={3} />
+                    <Check size={14} color="white" strokeWidth={2} />
                 </View>
                 <Text style={[styles.reqText, { color: theme.text }]}>{req}</Text>
               </View>

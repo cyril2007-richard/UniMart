@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
   AlertCircle,
   BellOff,
   CheckCircle,
+  ChevronLeft,
   Info,
   X
 } from 'lucide-react-native';
@@ -60,7 +60,7 @@ export default function AnnouncementScreen() {
       <View style={[styles.notificationCard, { backgroundColor: theme.background }]}>
         {/* Icon Container */}
         <View style={[styles.iconContainer, { backgroundColor: styleConfig.bg }]}>
-          <IconComponent size={20} color={styleConfig.color} strokeWidth={2.5} />
+          <IconComponent size={20} color={styleConfig.color} strokeWidth={2} />
         </View>
 
         {/* Content */}
@@ -90,7 +90,7 @@ export default function AnnouncementScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color={theme.text} />
+          <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Notifications</Text>
         <View style={{ width: 24 }} />

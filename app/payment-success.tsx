@@ -21,7 +21,7 @@ export default function PaymentSuccessScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.card, { backgroundColor: theme.surface }]}>
         <Animated.View style={[styles.iconContainer, { backgroundColor: '#4CAF50', transform: [{ scale: scaleValue }] }]}>
-          <Check size={50} color="white" strokeWidth={3} />
+          <Check size={50} color="white" strokeWidth={2} />
         </Animated.View>
         
         <Text style={[styles.title, { color: theme.text }]}>Payment Successful!</Text>
@@ -34,13 +34,6 @@ export default function PaymentSuccessScreen() {
             onPress={() => router.replace('/(app)/(tabs)')}
         >
             <Text style={styles.buttonText}>Continue Shopping</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-            style={[styles.secondaryButton, { borderColor: theme.purple }]}
-            onPress={() => router.replace('/(app)/(tabs)/chat')}
-        >
-            <Text style={[styles.secondaryButtonText, { color: theme.purple }]}>View Chats</Text>
         </TouchableOpacity>
       </View>
     </View>

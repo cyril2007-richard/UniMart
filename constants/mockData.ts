@@ -241,63 +241,6 @@ const mockData: Category[] = [
   },
 ];
 
-export interface Chat {
-  id: string;
-  sellerId: string;
-  userId: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  lastSeen: string;
-  messages: { id: number; sender: string; text: string; time: string; }[];
-}
-
-export const chats: Chat[] = [
-  {
-    id: "1",
-    sellerId: "2",
-    userId: "1",
-    name: "Amaka Johnson",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    lastMessage: "Omo I can’t believe that lecture today 😭",
-    lastSeen: "2m ago",
-    messages: [
-      { id: 1, sender: "Amaka", text: "Hey, you dey?", time: "10:02 AM" },
-      { id: 2, sender: "You", text: "Yea, wassup?", time: "10:03 AM" },
-      { id: 3, sender: "Amaka", text: "Omo that test wicked 😭", time: "10:04 AM" },
-      { id: 4, sender: "You", text: "Fr bro 💀 I wasn’t ready", time: "10:06 AM" },
-      { id: 5, sender: "Amaka", text: "You wan meet later for lab?", time: "10:08 AM" },
-      { id: 6, sender: "You", text: "Sure thing", time: "10:09 AM" },
-      { id: 7, sender: "Amaka", text: "Cool 😎", time: "10:09 AM" },
-      { id: 8, sender: "You", text: "See you there", time: "10:10 AM" },
-      { id: 9, sender: "Amaka", text: "Bet", time: "10:10 AM" },
-      { id: 10, sender: "You", text: "👋", time: "10:11 AM" },
-    ],
-  },
-  {
-    id: "2",
-    sellerId: "1",
-    userId: "2",
-    name: "Tunde Okafor",
-    avatar: "https://randomuser.me/api/portraits/men/31.jpg",
-    lastMessage: "Send me that note abeg 😭",
-    lastSeen: "5m ago",
-    messages: [
-      { id: 1, sender: "Tunde", text: "Guy how far", time: "9:45 AM" },
-      { id: 2, sender: "You", text: "Cool bro, you?", time: "9:46 AM" },
-      { id: 3, sender: "Tunde", text: "Man I missed class again 💀", time: "9:47 AM" },
-      { id: 4, sender: "You", text: "😂 again??", time: "9:48 AM" },
-      { id: 5, sender: "Tunde", text: "No fuel jare 😭", time: "9:50 AM" },
-      { id: 6, sender: "You", text: "I’ll send you the notes", time: "9:51 AM" },
-      { id: 7, sender: "Tunde", text: "Bless you 🙏", time: "9:52 AM" },
-      { id: 8, sender: "You", text: "Sent ✅", time: "9:55 AM" },
-      { id: 9, sender: "Tunde", text: "Got it, thanks!", time: "9:56 AM" },
-      { id: 10, sender: "You", text: "No wahala 😎", time: "9:57 AM" },
-    ],
-  },
-
-];
-
 export interface User {
   id: string;
   name: string;

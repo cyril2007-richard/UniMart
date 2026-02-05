@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Camera, Grid, List, LogIn, Settings, Trash2 } from 'lucide-react-native';
+import { Camera, Grid, List, LogIn, Settings, Trash2, BadgeCheck } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -160,7 +160,7 @@ export default function ProfileScreen() {
         </View>
       </View>
       <TouchableOpacity style={styles.listDeleteBtn} onPress={() => handleDeletePress(item.id)}>
-        <Trash2 color={theme.purple || '#FF4444'} size={20} />
+        <Trash2 color={theme.purple} size={20} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -212,7 +212,10 @@ export default function ProfileScreen() {
                     autoCapitalize="none"
                   />
                 ) : (
-                  <Text style={[styles.nameText, { color: theme.text }]}>{currentUser.name}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.nameText, { color: theme.text, marginBottom: 0 }]}>{currentUser.name}</Text>
+                    {currentUser.isVerified && <BadgeCheck size={20} color={theme.purple} fill={theme.lightPurple || '#F3E8FF'} />}
+                  </View>
                 )}
                 
                 {/* Stats Row */}

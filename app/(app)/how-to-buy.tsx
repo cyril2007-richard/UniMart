@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ChevronLeft,
   CreditCard,
-  MessageCircle,
   Search,
   ShoppingBag
 } from 'lucide-react-native';
@@ -36,12 +35,6 @@ export default function HowToBuyScreen() {
       description: 'Tap on a product to view images, price, and description. Check seller reviews.',
       icon: ShoppingBag,
       color: '#9b59b6'
-    },
-    {
-      title: 'Chat with Seller',
-      description: 'Send a message to ask questions, negotiate price, or arrange a meetup.',
-      icon: MessageCircle,
-      color: '#e67e22'
     },
     {
       title: 'Payment & Delivery',

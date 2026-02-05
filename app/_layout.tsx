@@ -1,5 +1,4 @@
 // app/_layout.tsx
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -10,7 +9,6 @@ import { CartProvider } from '../contexts/CartContext';
 import { ListingsProvider } from '../contexts/ListingsContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { CategoryProvider } from '../contexts/CategoryContext';
-import { ChatProvider } from '../contexts/ChatContext';
 import { ActivityIndicator, View } from 'react-native';
 
 export { ErrorBoundary } from 'expo-router';
@@ -24,7 +22,6 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
   });
 
   useEffect(() => {
@@ -47,9 +44,7 @@ export default function RootLayout() {
         <CartProvider>
           <NotificationProvider>
             <CategoryProvider>
-              <ChatProvider>
                 <RootLayoutNav />
-              </ChatProvider>
             </CategoryProvider>
           </NotificationProvider>
         </CartProvider>

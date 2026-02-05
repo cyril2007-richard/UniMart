@@ -171,6 +171,19 @@ export default function CheckoutScreen() {
                       read: false,
                       createdAt: serverTimestamp()
                   });
+
+                  // Record the payment for the web interface
+                  await addDoc(collection(db, 'payments'), {
+                      buyerId: currentUser.id,
+                      buyerName: currentUser.name,
+                      sellerId: sellerId,
+                      amount: totalAmount,
+                      items: sellerItems.map(i => ({ id: i.id, title: i.name || i.title, price: i.price, quantity: i.quantity || 1 })),
+                      status: 'completed',
+                      paymentMethod: paymentMethod,
+                      deliveryMethod: deliveryMethod,
+                      createdAt: serverTimestamp()
+                  });
               } catch (error: any) {
                   // Silently fail if permissions are missing to avoid interrupting the checkout flow
                   if (error.code === 'permission-denied') {
@@ -340,8 +353,8 @@ export default function CheckoutScreen() {
               </View>
           )}
            {deliveryMethod === 'pickup' && (
-              <View style={[styles.pickupNote, { backgroundColor: '#e8f4fd' }]}>
-                  <Text style={{ color: '#0d47a1', fontSize: 13 }}>You will meet the seller at an agreed location on campus.</Text>
+              <View style={[styles.pickupNote, { backgroundColor: theme.lightPurple }]}>
+                  <Text style={{ color: theme.purple, fontSize: 13 }}>You will meet the seller at an agreed location on campus.</Text>
               </View>
           )}
         </View>

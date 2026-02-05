@@ -1,14 +1,9 @@
 import { useRouter } from 'expo-router';
 import {
   Bell,
-  Bike,
-  ChevronDown,
-  ChevronUp,
   MapPin,
   Search,
-  ShoppingBag,
   ShoppingCart,
-  Store
 } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import {
@@ -38,7 +33,6 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const carouselRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showQuickActions, setShowQuickActions] = useState(true);
   
   const { listings } = useListings();
   const recentListings = listings.slice(0, 5);
@@ -49,21 +43,21 @@ export default function HomeScreen() {
       title: 'Campus Essentials',
       description: 'Up to 50% off textbooks & stationery',
       image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop',
-      color: '#4834d4'
+      color: theme.purple
     },
     {
       id: 2,
       title: 'Tech Gadgets',
       description: 'Laptops, tablets & accessories',
       image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop',
-      color: '#0984e3'
+      color: theme.gold
     },
     {
       id: 3,
       title: 'Fashion Week',
       description: 'Trending styles for students',
       image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop',
-      color: '#e84393'
+      color: theme.purple
     },
   ];
 
@@ -108,7 +102,7 @@ export default function HomeScreen() {
             style={[styles.searchBar, { backgroundColor: theme.surface }]}
             activeOpacity={0.9}
           >
-            <Search color={theme.purple} size={20} strokeWidth={2.5} />
+            <Search color={theme.purple} size={20} strokeWidth={2} />
             <Text style={[styles.searchInput, { color: theme.secondaryText }]}>What are you looking for?</Text>
           </TouchableOpacity>
         </View>
@@ -167,54 +161,6 @@ export default function HomeScreen() {
               />
             ))}
           </View>
-        </View>
-
-        {/* Quick Actions Grid */}
-        <View style={styles.sectionContainer}>
-          <TouchableOpacity 
-            style={styles.sectionHeader} 
-            onPress={() => setShowQuickActions(!showQuickActions)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.sectionHeaderTitle, { color: theme.text }]}>Quick Actions</Text>
-            {showQuickActions ? (
-              <ChevronUp size={20} color={theme.secondaryText} />
-            ) : (
-              <ChevronDown size={20} color={theme.secondaryText} />
-            )}
-          </TouchableOpacity>
-          
-          {showQuickActions && (
-            <View style={styles.quickActionGrid}>
-              
-              {/* How to Buy */}
-              <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: theme.surface }]} onPress={() => router.push('/how-to-buy')}>
-                  <View style={[styles.iconCircle, { backgroundColor: '#E3F2FD' }]}>
-                      {/* Replaced TrendingUp with ShoppingBag */}
-                      <ShoppingBag color="#2196F3" size={24} strokeWidth={2} />
-                  </View>
-                  <Text style={[styles.quickActionText, { color: theme.text }]}>How to Buy</Text>
-              </TouchableOpacity>
-
-              {/* Start Selling */}
-              <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: theme.surface }]} onPress={() => router.push('/how-to-sell')}>
-                  <View style={[styles.iconCircle, { backgroundColor: '#E8F5E9' }]}>
-                      {/* Replaced Package with Store */}
-                      <Store color="#4CAF50" size={24} strokeWidth={2} />
-                  </View>
-                  <Text style={[styles.quickActionText, { color: theme.text }]}>Start Selling</Text>
-              </TouchableOpacity>
-
-              {/* Rider Job */}
-              <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: theme.surface }]} onPress={() => router.push('/apply')}>
-                  <View style={[styles.iconCircle, { backgroundColor: '#FFF3E0' }]}>
-                      {/* Bike is iconic for Riders */}
-                      <Bike color="#FF9800" size={24} strokeWidth={2} />
-                  </View>
-                  <Text style={[styles.quickActionText, { color: theme.text }]}>Rider Job</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
 
         {/* Fresh Finds (Real Data) */}

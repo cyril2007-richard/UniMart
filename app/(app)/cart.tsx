@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Check, LogIn, Minus, Plus, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react-native';
+import { Check, ChevronLeft, LogIn, Minus, Plus, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { FlatList, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +23,7 @@ export default function CartScreen() {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={[styles.header, { paddingTop: insets.top }]}>
        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color={theme.text} />
+          <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: theme.text }]}>My Cart</Text>
             <View style={{ width: 24 }} />
@@ -63,7 +62,7 @@ export default function CartScreen() {
             item.selected ? { backgroundColor: theme.purple, borderColor: theme.purple } : { borderColor: theme.secondaryText }
         ]}
       >
-        {item.selected && <Check size={14} color="white" strokeWidth={3} />}
+        {item.selected && <Check size={14} color="white" strokeWidth={2} />}
       </TouchableOpacity>
 
       {/* Image */}
@@ -74,7 +73,7 @@ export default function CartScreen() {
         <View style={styles.itemHeader}>
             <Text style={[styles.productName, { color: theme.text }]} numberOfLines={2}>{item.name}</Text>
             <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.removeButton}>
-                <Trash2 size={18} color={theme.purple || '#FF4444'} />
+                <Trash2 size={18} color={theme.purple} />
             </TouchableOpacity>
         </View>
         
@@ -108,7 +107,7 @@ export default function CartScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color={theme.text} />
+          <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>My Cart</Text>
         {cartItems.length > 0 ? (

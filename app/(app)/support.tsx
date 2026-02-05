@@ -1,40 +1,35 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
-  FlatList,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
+  Linking,
+  ScrollView,
 } from "react-native";
 import Colors from "../../constants/Colors";
 
 export default function SupportScreen() {
   const router = useRouter();
-  const [messages, setMessages] = useState<any[]>([]);
-  const [text, setText] = useState("");
   const theme = Colors.light;
 
-  const sendMessage = () => {
-    if (!text.trim()) return;
-    const newMsg = { id: Date.now(), sender: "You", text, time: "Now" };
-    setMessages([...messages, newMsg]);
-    setText("");
+  const handleEmail = () => {
+    Linking.openURL('mailto:support@unimart.com');
+  };
+
+  const handleCall = () => {
+    Linking.openURL('tel:+1234567890');
   };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: theme.surface }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={{ flex: 1, backgroundColor: theme.surface }}>
         {/* Custom Header */}
         <View
           style={{
@@ -65,62 +60,57 @@ export default function SupportScreen() {
           </View>
         </View>
 
-        {/* Messages */}
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingVertical: 10 }}
-          renderItem={({ item }) => (
-            <View
-              style={{
-                alignSelf: item.sender === "You" ? "flex-end" : "flex-start",
-                backgroundColor: item.sender === "You" ? theme.purple : theme.background,
-                padding: 10,
-                marginVertical: 4,
-                marginHorizontal: 10,
-                borderRadius: 10,
-                maxWidth: "75%",
-                shadowColor: "#000",
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-              }}
-            >
-              <Text style={{ color: item.sender === "You" ? theme.white : theme.text }}>{item.text}</Text>
-            </View>
-          )}
-        />
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 10 }}>How can we help you?</Text>
+          <Text style={{ fontSize: 16, color: theme.secondaryText, marginBottom: 30, lineHeight: 24 }}>
+            We are here to assist you with any issues or questions you may have about UniMart. Please reach out to us using the methods below.
+          </Text>
 
-        {/* Input */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: theme.background,
-            padding: 10,
-            borderTopWidth: 1,
-            borderColor: theme.surface,
-          }}
-        >
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Message..."
-            placeholderTextColor={theme.tabIconDefault}
-            style={{
-              flex: 1,
-              backgroundColor: theme.surface,
-              borderRadius: 20,
-              paddingHorizontal: 15,
-              paddingVertical: 8,
-              marginRight: 8,
-              color: theme.text,
+          <TouchableOpacity 
+            onPress={handleEmail}
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              backgroundColor: theme.background, 
+              padding: 20, 
+              borderRadius: 12, 
+              marginBottom: 15,
+              shadowColor: "#000",
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 2
             }}
-          />
-          <TouchableOpacity onPress={sendMessage}>
-            <Ionicons name="send" size={22} color={theme.purple} />
+          >
+            <Ionicons name="mail-outline" size={28} color={theme.purple} style={{ marginRight: 15 }} />
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>Email Support</Text>
+              <Text style={{ color: theme.secondaryText }}>support@unimart.com</Text>
+            </View>
           </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+
+          <TouchableOpacity 
+            onPress={handleCall}
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              backgroundColor: theme.background, 
+              padding: 20, 
+              borderRadius: 12,
+              shadowColor: "#000",
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 2
+            }}
+          >
+            <Ionicons name="call-outline" size={28} color={theme.purple} style={{ marginRight: 15 }} />
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>Phone Support</Text>
+              <Text style={{ color: theme.secondaryText }}>+1 (234) 567-890</Text>
+            </View>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </View>
     </>
   );
 }

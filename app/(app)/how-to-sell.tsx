@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   Camera,
   ChevronLeft,
-  MessageCircle,
   PackagePlus,
   ShieldCheck
 } from 'lucide-react-native';
@@ -43,12 +42,6 @@ export default function HowToSellScreen() {
       description: 'Write a clear description including condition, specs, and any defects.',
       icon: Camera,
       color: '#e67e22' // Orange
-    },
-    {
-      title: 'Connect & Sell',
-      description: 'Wait for buyers to contact you via chat. Arrange delivery or pickup safely.',
-      icon: MessageCircle,
-      color: '#2980b9' // Blue
     }
   ];
 
@@ -116,7 +109,7 @@ export default function HowToSellScreen() {
           style={[styles.ctaButton, { backgroundColor: theme.purple }]} 
           activeOpacity={0.8}
           // Assuming you have an 'add' route or tab. Adjust as needed.
-          onPress={() => router.navigate('/(app)/(tabs)/add')} 
+          onPress={() => router.navigate('/(app)/add')} 
         >
           <Text style={styles.ctaButtonText}>List an Item</Text>
           <ArrowRight color="white" size={20} />

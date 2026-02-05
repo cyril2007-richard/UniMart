@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { addDoc, collection, doc, getDoc, getDocs, increment, onSnapshot, query, serverTimestamp, setDoc, where, writeBatch } from 'firebase/firestore';
-import { ChevronLeft, Grid, List, PackageOpen, UserCheck, UserPlus } from 'lucide-react-native';
+import { ChevronLeft, Grid, List, PackageOpen, UserCheck, UserPlus, BadgeCheck } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +27,6 @@ export default function SellerProfileScreen() {
   const [activeTab, setActiveTab] = useState('grid');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
   
   // Contexts
   const { currentUser } = useAuth();
@@ -106,56 +105,6 @@ export default function SellerProfileScreen() {
     }
   };
 
-  const handleMessageSeller = async () => {
-    if (!currentUser) {
-      router.push('/(auth)/login');
-      return;
-    }
-    if (!seller || isCreatingChat) return;
-
-    setIsCreatingChat(true);
-    // ... (Your existing chat logic)
-    try {
-      const chatsRef = collection(db, 'chats');
-      const q = query(chatsRef, where('participants', 'array-contains', currentUser.id));
-      const querySnapshot = await getDocs(q);
-      let existingChat: any = null;
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.participants.includes(seller.id)) {
-          existingChat = { id: doc.id, ...data };
-        }
-      });
-
-      if (existingChat) {
-        router.push(`/chat/${existingChat.id}`);
-      } else {
-        const sortedParticipants = [currentUser.id, seller.id].sort();
-        const newChatRef = await addDoc(chatsRef, {
-          participants: sortedParticipants,
-          lastMessage: '',
-          lastUpdatedAt: serverTimestamp(),
-          users: {
-            [currentUser.id]: { name: currentUser.name, avatar: currentUser.profilePicture },
-            [seller.id]: { name: seller.name, avatar: seller.profilePicture }
-          }
-        });
-        
-        // Add Interactions logic here (omitted for brevity, keep your original code)
-        const currentUserInteractionsRef = doc(db, 'users', currentUser.id, 'interactions', seller.id);
-        await setDoc(currentUserInteractionsRef, { name: seller.name, avatar: seller.profilePicture, chatId: newChatRef.id });
-        const sellerInteractionsRef = doc(db, 'users', seller.id, 'interactions', currentUser.id);
-        await setDoc(sellerInteractionsRef, { name: currentUser.name, avatar: currentUser.profilePicture, chatId: newChatRef.id });
-
-        router.push(`/chat/${newChatRef.id}`);
-      }
-    } catch (error) {
-      addNotification('Failed to start chat.', 'error');
-    } finally {
-      setIsCreatingChat(false);
-    }
-  };
-
   if (!seller) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
@@ -203,7 +152,10 @@ export default function SellerProfileScreen() {
 
         {/* Bio */}
         <View style={styles.bioContainer}>
-            <Text style={[styles.realName, { color: theme.text }]}>{seller.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.realName, { color: theme.text }]}>{seller.name}</Text>
+                {seller.isVerified && <BadgeCheck size={18} color={theme.purple} />}
+            </View>
             {/* Optional Bio Text could go here */}
         </View>
 
@@ -227,18 +179,6 @@ export default function SellerProfileScreen() {
                         <Text style={[styles.btnText, { color: 'white' }]}>Follow</Text>
                         <UserPlus size={16} color="white" style={{ marginLeft: 6 }} />
                     </>
-                )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-                style={[styles.messageBtn, { backgroundColor: theme.surface }]}
-                onPress={handleMessageSeller}
-                disabled={isCreatingChat}
-            >
-                {isCreatingChat ? (
-                   <ActivityIndicator size="small" color={theme.text} />
-                ) : (
-                   <Text style={[styles.btnText, { color: theme.text }]}>Message</Text>
                 )}
             </TouchableOpacity>
         </View>
@@ -341,7 +281,6 @@ const styles = StyleSheet.create({
   // Actions
   actionButtons: { flexDirection: 'row', gap: 8 },
   followBtn: { flex: 1, flexDirection: 'row', height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  messageBtn: { flex: 1, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontSize: 14, fontWeight: '600' },
 
   // Tabs
