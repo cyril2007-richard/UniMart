@@ -53,7 +53,23 @@ export default function CheckoutScreen() {
   }
 
   // Parse single buy now item if present
-  const buyNowItem = params.buyNowItem ? JSON.parse(params.buyNowItem as string) : null;
+  const [buyNowItem, setBuyNowItem] = useState<any>(null);
+
+  useEffect(() => {
+    if (params.buyNowItem) {
+      try {
+        const parsed = typeof params.buyNowItem === 'string' 
+          ? JSON.parse(params.buyNowItem) 
+          : Array.isArray(params.buyNowItem) 
+            ? JSON.parse(params.buyNowItem[0]) 
+            : params.buyNowItem;
+        setBuyNowItem(parsed);
+      } catch (e) {
+        console.error("Failed to parse buyNowItem", e);
+        addNotification('Error loading item details.', 'error');
+      }
+    }
+  }, [params.buyNowItem]);
   
   const deliveryMethod = 'rider';
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | 'ussd'>('card');
@@ -69,12 +85,12 @@ export default function CheckoutScreen() {
 
   const itemsToCheckout = buyNowItem ? [buyNowItem] : cartItems.filter(item => item.selected);
   const subtotal = buyNowItem 
-    ? buyNowItem.price 
-    : itemsToCheckout.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    ? (Number(buyNowItem.price) || 0) 
+    : itemsToCheckout.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
   
-  // Service fee: 12% of subtotal, capped at 1000
-  const serviceFee = Math.min(subtotal * 0.12, 1000);
-  const grandTotal = subtotal + serviceFee;
+  // Combined Tax (Delivery + Service): 12% of subtotal, no cap
+  const tax = subtotal * 0.12;
+  const grandTotal = subtotal + tax;
 
   const handleCopy = async (text: string) => {
     await Clipboard.setStringAsync(text);
@@ -152,6 +168,10 @@ export default function CheckoutScreen() {
           'success'
       );
 
+      // Create a single Receipt Reference for the entire order
+      const receiptRef = doc(collection(db, 'receipts'));
+      const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
       // Notify Sellers
       const itemsBySeller: { [key: string]: any[] } = {};
       itemsToCheckout.forEach((item: any) => {
@@ -161,118 +181,109 @@ export default function CheckoutScreen() {
           itemsBySeller[item.sellerId].push(item);
       });
 
-          // Send notification to each seller & Create Logistics Order
-          for (const sellerId in itemsBySeller) {
-              const sellerItems = itemsBySeller[sellerId];
-              const itemNames = sellerItems.map(i => i.name || i.title).join(', ');
-              const totalAmount = sellerItems.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
-              
-              try {
-                  const notificationsRef = collection(db, 'users', sellerId, 'notifications');
-                  await addDoc(notificationsRef, {
-                      message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}. Rider will arrive soon.`,
-                      type: 'success',
-                      read: false,
-                      createdAt: serverTimestamp()
-                  });
+      // Send notification to each seller & Create Logistics Order
+      for (const sellerId in itemsBySeller) {
+          const sellerItems = itemsBySeller[sellerId];
+          const itemNames = sellerItems.map(i => i.name || i.title).join(', ');
+          const totalAmount = sellerItems.reduce((sum, i) => sum + ((Number(i.price) || 0) * (i.quantity || 1)), 0);
+          
+          try {
+              const notificationsRef = collection(db, 'users', sellerId, 'notifications');
+              await addDoc(notificationsRef, {
+                  message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}. Rider will arrive soon.`,
+                  type: 'success',
+                  read: false,
+                  createdAt: serverTimestamp()
+              });
 
-                  // Create Receipt Reference first to link it
-                  const receiptRef = doc(collection(db, 'receipts'));
+              // Create Order for Rider App
+              await addDoc(collection(db, 'orders'), {
+                customerId: currentUser.id,
+                customerName: currentUser.name,
+                customerPhone: currentUser.phoneNumber || "",
+                sellerId: sellerId,
+                items: sellerItems.map(i => ({ id: i.id, title: i.name || i.title, quantity: i.quantity || 1 })),
+                pickupLocation: {
+                  lat: 6.5170, // Mock Seller Location (e.g. Campus Center)
+                  lng: 3.3700,
+                  address: "Campus Main Gate (Seller Point)"
+                },
+                dropoffLocation: {
+                  lat: region.latitude,
+                  lng: region.longitude,
+                  address: address
+                },
+                status: "pending",
+                commissionAmount: 500, // Fixed commission
+                riderId: null,
+                receiptId: receiptRef.id, // LINK TO SHARED RECEIPT
+                confirmationCode: confirmationCode, // SECURE CODE
+                createdAt: serverTimestamp(),
+                sellerVerifiedPickup: false
+              });
 
-                  // Generate 6-digit confirmation code
-                  const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+              // Record the payment for the web interface
+              await addDoc(collection(db, 'payments'), {
+                  buyerId: currentUser.id,
+                  buyerName: currentUser.name,
+                  sellerId: sellerId,
+                  amount: totalAmount,
+                                        items: sellerItems.map(i => ({ id: i.id, title: i.name || i.title, price: (Number(i.price) || 0), quantity: i.quantity || 1 })),                  status: 'completed',
+                  paymentMethod: paymentMethod,
+                  deliveryMethod: deliveryMethod,
+                  receiptId: receiptRef.id,
+                  createdAt: serverTimestamp()
+              });
 
-                  // Create Order for Rider App
-                  await addDoc(collection(db, 'orders'), {
-                    customerId: currentUser.id,
-                    customerName: currentUser.name,
-                    customerPhone: currentUser.phoneNumber || "",
-                    sellerId: sellerId,
-                    items: sellerItems.map(i => ({ id: i.id, title: i.name || i.title, quantity: i.quantity || 1 })),
-                    pickupLocation: {
-                      lat: 6.5170, // Mock Seller Location (e.g. Campus Center)
-                      lng: 3.3700,
-                      address: "Campus Main Gate (Seller Point)"
-                    },
-                    dropoffLocation: {
-                      lat: region.latitude,
-                      lng: region.longitude,
-                      address: address
-                    },
-                    status: "pending",
-                    commissionAmount: 500, // Fixed commission
-                    riderId: null,
-                    receiptId: receiptRef.id, // LINK TO RECEIPT
-                    confirmationCode: confirmationCode, // SECURE CODE
-                    createdAt: serverTimestamp(),
-                    sellerVerifiedPickup: false
-                  });
-
-                  // Record the payment for the web interface
-                  await addDoc(collection(db, 'payments'), {
+              // Record sales in the listing subcollection for Seller Insights
+              for (const item of sellerItems) {
+                  const salesRef = collection(db, 'listings', item.id, 'sales');
+                  await addDoc(salesRef, {
                       buyerId: currentUser.id,
                       buyerName: currentUser.name,
-                      sellerId: sellerId,
-                      amount: totalAmount,
-                      items: sellerItems.map(i => ({ id: i.id, title: i.name || i.title, price: i.price, quantity: i.quantity || 1 })),
-                      status: 'completed',
-                      paymentMethod: paymentMethod,
-                      deliveryMethod: deliveryMethod,
+                      quantity: item.quantity || 1,
+                                                price: (Number(item.price) || 0),
+                                                total: ((Number(item.price) || 0) * (item.quantity || 1)),                      paymentMethod: paymentMethod,
                       receiptId: receiptRef.id,
                       createdAt: serverTimestamp()
                   });
+              }
+          } catch (error: any) {
+              if (error.code === 'permission-denied') {
+                console.warn(`Permission denied processing order for seller ${sellerId}.`);
+              } else {
+                console.error(`Failed to process order for seller ${sellerId}`, error);
+              }
+          }
+      }
+              
+      // Record the overall receipt for the buyer
+      try {
+          await setDoc(receiptRef, {
+              buyerId: currentUser.id,
+              buyerName: currentUser.name,
+              items: itemsToCheckout.map(i => ({ 
+                  id: i.id, 
+                  title: i.name || i.title, 
+                  price: (Number(i.price) || 0), 
+                  quantity: i.quantity || 1,
+                  image: i.image || i.images?.[0]
+              })),
+              subtotal: subtotal,
+              tax: tax,
+              totalAmount: grandTotal,
+              paymentMethod: paymentMethod,
+              deliveryMethod: deliveryMethod,
+              status: 'pending',
+              confirmationCode: confirmationCode,
+              createdAt: serverTimestamp()
+          });
+      } catch (error) {
+          console.error('Failed to record receipt:', error);
+      }
+    
+      setIsProcessing(false);
 
-                  // NEW: Record sales in the listing subcollection for Seller Insights
-                  for (const item of sellerItems) {
-                      const salesRef = collection(db, 'listings', item.id, 'sales');
-                      await addDoc(salesRef, {
-                          buyerId: currentUser.id,
-                          buyerName: currentUser.name,
-                          quantity: item.quantity || 1,
-                          price: item.price,
-                          total: (item.price * (item.quantity || 1)),
-                          paymentMethod: paymentMethod,
-                          receiptId: receiptRef.id,
-                          createdAt: serverTimestamp()
-                      });
-                  }
-                                } catch (error: any) {
-                                // Silently fail if permissions are missing to avoid interrupting the checkout flow
-                                if (error.code === 'permission-denied') {
-                                  console.warn(`Permission denied sending notification to seller ${sellerId}. Check Firestore rules.`);
-                                } else {
-                                  console.error(`Failed to notify seller ${sellerId}`, error);
-                                }
-                            }
-                        }
-              
-                        // Record the overall receipt for the buyer
-                        try {
-                            // Use setDoc with the pre-generated reference
-                            await setDoc(receiptRef, {
-                                buyerId: currentUser.id,
-                                buyerName: currentUser.name,
-                                items: itemsToCheckout.map(i => ({ 
-                                    id: i.id, 
-                                    title: i.name || i.title, 
-                                    price: i.price, 
-                                    quantity: i.quantity || 1,
-                                    image: i.image || i.images?.[0]
-                                })),
-                                subtotal: subtotal,
-                                serviceFee: serviceFee,
-                                totalAmount: grandTotal,
-                                paymentMethod: paymentMethod,
-                                deliveryMethod: deliveryMethod,
-                                status: 'pending', // Initial status
-                                confirmationCode: confirmationCode, // Store locally too for display
-                                createdAt: serverTimestamp()
-                            });
-                        } catch (error) {
-                            console.error('Failed to record receipt:', error);
-                        }
-              
-                        setIsProcessing(false);
           if (!buyNowItem) {
             await clearCart(); // Only clear cart if it was a cart checkout
           }
@@ -370,7 +381,7 @@ export default function CheckoutScreen() {
                   <Text numberOfLines={1} style={[styles.itemName, { color: theme.text }]}>{item.name || item.title}</Text>
                   <Text style={[styles.itemMeta, { color: theme.secondaryText }]}>Qty: {item.quantity || 1}</Text>
                 </View>
-                <Text style={[styles.itemPrice, { color: theme.text }]}>₦{(item.price * (item.quantity || 1)).toLocaleString()}</Text>
+                <Text style={[styles.itemPrice, { color: theme.text }]}>₦{((Number(item.price) || 0) * (item.quantity || 1)).toLocaleString()}</Text>
               </View>
             ))}
             <View style={[styles.subtotalRow, { borderTopColor: theme.background }]}>
@@ -403,20 +414,28 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={[styles.mapContainer, { borderColor: theme.surface }]}>
-            <MapView
-              style={styles.map}
-              region={region}
-              mapType="satellite"
-            >
-              <Marker
-                coordinate={{
-                  latitude: region.latitude,
-                  longitude: region.longitude,
-                }}
-                title="Delivery Location"
-                pinColor={theme.primary}
-              />
-            </MapView>
+            {MapView ? (
+              <MapView
+                style={styles.map}
+                region={region}
+                mapType="satellite"
+              >
+                {Marker && (
+                  <Marker
+                    coordinate={{
+                      latitude: region.latitude,
+                      longitude: region.longitude,
+                    }}
+                    title="Delivery Location"
+                    pinColor={theme.primary}
+                  />
+                )}
+              </MapView>
+            ) : (
+              <View style={[styles.map, { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.surface }]}>
+                <Text style={{ color: theme.secondaryText }}>Map not available</Text>
+              </View>
+            )}
           </View>
 
           <View style={[styles.pickupNote, { backgroundColor: theme.secondaryBackground, marginTop: 12 }]}>
@@ -466,8 +485,8 @@ export default function CheckoutScreen() {
                 <Text style={{ color: theme.text }}>₦{subtotal.toLocaleString()}</Text>
             </View>
             <View style={styles.billRow}>
-                <Text style={{ color: theme.secondaryText }}>Service Fee</Text>
-                <Text style={{ color: theme.text }}>₦{serviceFee.toLocaleString()}</Text>
+                <Text style={{ color: theme.secondaryText }}>Tax (12%)</Text>
+                <Text style={{ color: theme.text }}>₦{tax.toLocaleString()}</Text>
             </View>
             <View style={[styles.billRow, styles.totalRow, { borderTopColor: theme.background }]}>
                 <Text style={{ color: theme.text, fontWeight: '700', fontSize: 18 }}>Grand Total</Text>
@@ -495,6 +514,9 @@ export default function CheckoutScreen() {
             <ShieldCheck size={14} color={theme.secondaryText} />
             <Text style={[styles.securityText, { color: theme.secondaryText }]}>Payments secured by Endow</Text>
         </View>
+        <Text style={[styles.taxNote, { color: theme.mutedText }]}>
+          * 12% Tax includes delivery fee and service maintenance.
+        </Text>
       </View>
 
     </KeyboardAvoidingView>
@@ -576,4 +598,5 @@ const styles = StyleSheet.create({
   payButtonText: { color: 'white', fontSize: 18, fontWeight: '700' },
   securityNote: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   securityText: { fontSize: 12 },
+  taxNote: { fontSize: 10, textAlign: 'center', marginTop: 8, fontStyle: 'italic' },
 });
