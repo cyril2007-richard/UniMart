@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Grid, Package, Search } from "lucide-react-native"; // Modern Icons
+import { Grid, Package } from "lucide-react-native"; // Modern Icons
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -27,7 +27,6 @@ export default function ShopScreen() {
   const { categories, loading } = useCategories();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Initial Selection
   useEffect(() => {
@@ -36,42 +35,15 @@ export default function ShopScreen() {
     }
   }, [categories]);
 
-  // Search Logic
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery) return categories;
-    const lowerQuery = searchQuery.toLowerCase();
-    // Return categories that match OR contain matching subcategories
-    return categories.filter(cat => 
-      cat.name.toLowerCase().includes(lowerQuery) || 
-      cat.subcategories.some(sub => sub.toLowerCase().includes(lowerQuery))
-    );
-  }, [categories, searchQuery]);
-
-  // Auto-select first result on search
-  useEffect(() => {
-    if (filteredCategories.length > 0) {
-       const exists = filteredCategories.find(c => c.id === selectedCategory);
-       if (!exists) {
-           setSelectedCategory(filteredCategories[0].id);
-       }
-    }
-  }, [filteredCategories, selectedCategory]);
-
-  const currentCategory = filteredCategories.find((c) => c.id === selectedCategory);
+  const currentCategory = categories.find((c) => c.id === selectedCategory);
   
-  // Filter Subcategories
-  const displaySubcategories = currentCategory 
-    ? currentCategory.subcategories.filter(sub => 
-        !searchQuery || 
-        sub.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        currentCategory.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ) 
-    : [];
+  // Subcategories
+  const displaySubcategories = currentCategory ? currentCategory.subcategories : [];
 
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.purple} />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -83,8 +55,7 @@ export default function ShopScreen() {
         onPress={() => setSelectedCategory(item.id)}
         style={[
           styles.sidebarItem,
-          isSelected && styles.sidebarItemActive,
-          isSelected ? { backgroundColor: theme.background } : { backgroundColor: 'transparent' }
+          isSelected && { backgroundColor: theme.background }
         ]}
         activeOpacity={0.8}
       >
@@ -92,12 +63,12 @@ export default function ShopScreen() {
           numberOfLines={2}
           style={[
             styles.sidebarText,
-            { color: isSelected ? theme.purple : theme.secondaryText },
-            isSelected && styles.sidebarTextActive
+            { color: isSelected ? theme.primary : theme.secondaryText, fontWeight: isSelected ? '700' : '500' }
           ]}
         >
           {item.name}
         </Text>
+        {isSelected && <View style={[styles.activeIndicator, { backgroundColor: theme.primary }]} />}
       </TouchableOpacity>
     );
   };
@@ -125,19 +96,6 @@ export default function ShopScreen() {
                 <Ionicons name="notifications-outline" size={24} color={theme.text} />
             </TouchableOpacity>
         </View>
-
-        {/* Search Bar */}
-        <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
-          <Search size={20} color={theme.secondaryText} style={styles.searchIcon} />
-          <TextInput
-            placeholder="Search for items..."
-            placeholderTextColor={theme.secondaryText}
-            style={[styles.searchInput, { color: theme.text }]}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            clearButtonMode="while-editing"
-          />
-        </View>
       </View>
 
       {/* Main Content Split View */}
@@ -146,7 +104,7 @@ export default function ShopScreen() {
         {/* Sidebar (Left) */}
         <View style={[styles.sidebar, { backgroundColor: theme.surface }]}>
             <FlatList
-                data={filteredCategories}
+                data={categories}
                 keyExtractor={(item) => item.id}
                 renderItem={renderSidebarItem}
                 showsVerticalScrollIndicator={false}
@@ -184,7 +142,7 @@ export default function ShopScreen() {
                 />
             ) : (
                 <View style={styles.emptyState}>
-                    <Search color={theme.secondaryText} size={40} />
+                    <Grid color={theme.secondaryText} size={40} />
                     <Text style={[styles.emptyText, { color: theme.secondaryText }]}>No categories found</Text>
                 </View>
             )}
@@ -214,16 +172,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 28, fontWeight: '700' },
   bellBtn: { padding: 4 },
-  
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 20,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 16, height: '100%' },
 
   // Content Layout
   contentContainer: { flex: 1, flexDirection: 'row' },

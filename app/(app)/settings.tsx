@@ -48,7 +48,7 @@ export default function SettingsScreen() {
       icon: LogIn,
       name: 'Login',
       action: () => router.push('/(auth)/login'),
-      color: theme.purple,
+      color: theme.primary,
     },
   ];
 
@@ -92,7 +92,7 @@ export default function SettingsScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {currentUser && (
           <View style={styles.profileSection}>
-            <UserCircle size={52} color={theme.purple} strokeWidth={1.5} />
+            <UserCircle size={52} color={theme.primary} strokeWidth={1.5} />
             <View style={styles.profileInfo}>
               <Text style={[styles.profileName, { color: theme.text }]}>{currentUser.name}</Text>
               <Text style={[styles.profileEmail, { color: theme.secondaryText }]}>{currentUser.email}</Text>
@@ -102,18 +102,18 @@ export default function SettingsScreen() {
 
         {menuItems.map((section, index) => (
           <View key={index} style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.secondaryText }]}>{section.title}</Text>
+            <Text style={[styles.sectionTitle, { color: theme.mutedText }]}>{section.title}</Text>
             <View style={[styles.menuContainer, { backgroundColor: theme.surface }]}>
               {section.items.map((item, itemIndex) => {
                 const Icon = item.icon;
-                const itemColor = item.color || (item.isDestructive ? theme.purple : theme.text);
+                const itemColor = item.color || (item.isDestructive ? theme.error : theme.text);
                 return (
                   <TouchableOpacity
                     key={itemIndex}
                     style={[
                       styles.menuItem,
                       itemIndex < section.items.length - 1 && styles.menuItemBorder,
-                      { borderBottomColor: theme.background }
+                      { borderBottomColor: theme.secondaryBackground }
                     ]}
                     onPress={item.action}
                   >
@@ -121,7 +121,7 @@ export default function SettingsScreen() {
                       <Icon size={20} color={itemColor} strokeWidth={1.5} />
                       <Text style={[styles.menuItemText, { color: itemColor }]}>{item.name}</Text>
                     </View>
-                    <ChevronRight size={20} color={theme.secondaryText} />
+                    <ChevronRight size={20} color={theme.mutedText} />
                   </TouchableOpacity>
                 );
               })}

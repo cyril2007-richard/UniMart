@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Camera, Grid, List, LogIn, Settings, Trash2, BadgeCheck } from 'lucide-react-native';
+import { Camera, Grid, List, LogIn, Settings, Trash2, BadgeCheck, Heart, ReceiptText } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -46,6 +46,16 @@ export default function ProfileScreen() {
     return listings.filter((listing) => listing.userId === currentUser.id);
   }, [listings, currentUser]);
 
+  const favoriteListings = useMemo(() => {
+    if (!currentUser || !currentUser.favorites) return [];
+    return listings.filter((listing) => currentUser.favorites?.includes(listing.id));
+  }, [listings, currentUser]);
+
+  const displayListings = useMemo(() => {
+    if (activeTab === 'favorites') return favoriteListings;
+    return userListings;
+  }, [activeTab, userListings, favoriteListings]);
+
   useEffect(() => {
     if (currentUser) {
       setNewUsername(currentUser.username);
@@ -58,17 +68,17 @@ export default function ProfileScreen() {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
         <View style={styles.loginCard}>
-          <View style={[styles.iconCircle, { backgroundColor: theme.lightPurple }]}>
-            <LogIn size={40} color={theme.purple} />
+          <View style={[styles.iconCircle, { backgroundColor: theme.surface }]}>
+            <LogIn size={40} color={theme.primary} />
           </View>
           <Text style={[styles.loginTitle, { color: theme.text }]}>Welcome to UniMart</Text>
           <Text style={[styles.loginSubtitle, { color: theme.secondaryText }]}>
             Log in to manage your listings and view your profile.
           </Text>
           <TouchableOpacity 
-            style={[styles.loginButton, { backgroundColor: theme.purple }]}
+            style={[styles.loginButton, { backgroundColor: theme.primary }]}
             onPress={() => router.push('/(auth)/login')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <Text style={styles.loginButtonText}>Login or Sign Up</Text>
           </TouchableOpacity>
@@ -128,62 +138,79 @@ export default function ProfileScreen() {
   };
 
   // --- Render Items ---
-  const renderGridItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      activeOpacity={0.8} 
-      style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, marginBottom: GAP }}
-      onPress={() => router.push(`/(app)/product-detail?id=${item.id}`)}
-    >
-      <Image source={{ uri: item.images[0] }} style={styles.gridImage} />
-      {isEditing && (
-        <TouchableOpacity style={styles.deleteOverlay} onPress={() => handleDeletePress(item.id)}>
-          <Trash2 color="white" size={16} />
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
-
-  const renderListItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      activeOpacity={0.7} 
-      style={[styles.listItem, { backgroundColor: theme.background }]} 
-      onPress={() => router.push(`/(app)/product-detail?id=${item.id}`)}
-    >
-      <Image source={{ uri: item.images[0] }} style={styles.listImage} />
-      <View style={styles.listContent}>
-        <View>
-          <Text numberOfLines={1} style={[styles.listTitle, { color: theme.text }]}>{item.title}</Text>
-          <Text style={[styles.listPrice, { color: theme.purple }]}>₦{Number(item.price).toLocaleString()}</Text>
-        </View>
-        <View style={styles.listMeta}>
-          <Text style={[styles.listDate, { color: theme.secondaryText }]}>Posted recently</Text>
-        </View>
-      </View>
-      <TouchableOpacity style={styles.listDeleteBtn} onPress={() => handleDeletePress(item.id)}>
-        <Trash2 color={theme.purple} size={20} />
+  const renderGridItem = ({ item }: { item: any }) => {
+    const isOwnProduct = item.userId === currentUser?.id;
+    const targetPath = (isOwnProduct && activeTab !== 'favorites') ? `/(app)/product-analysis?id=${item.id}` : `/(app)/product-detail?id=${item.id}`;
+    
+    return (
+      <TouchableOpacity 
+        activeOpacity={0.8} 
+        style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, marginBottom: GAP }}
+        onPress={() => router.push(targetPath as any)}
+      >
+        <Image source={{ uri: item.images[0] }} style={styles.gridImage} />
+        {isEditing && isOwnProduct && (
+          <TouchableOpacity style={styles.deleteOverlay} onPress={() => handleDeletePress(item.id)}>
+            <Trash2 color="white" size={16} />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const renderListItem = ({ item }: { item: any }) => {
+    const isOwnProduct = item.userId === currentUser?.id;
+    const targetPath = (isOwnProduct && activeTab !== 'favorites') ? `/(app)/product-analysis?id=${item.id}` : `/(app)/product-detail?id=${item.id}`;
+
+    return (
+      <TouchableOpacity 
+        activeOpacity={0.7} 
+        style={[styles.listItem, { backgroundColor: theme.surface }]} 
+        onPress={() => router.push(targetPath as any)}
+      >
+        <Image source={{ uri: item.images[0] }} style={styles.listImage} />
+        <View style={styles.listContent}>
+          <View>
+            <Text numberOfLines={1} style={[styles.listTitle, { color: theme.text }]}>{item.title}</Text>
+            <Text style={[styles.listPrice, { color: theme.text }]}>₦{Number(item.price).toLocaleString()}</Text>
+          </View>
+          <View style={styles.listMeta}>
+            <Text style={[styles.listDate, { color: theme.mutedText }]}>Posted recently</Text>
+          </View>
+        </View>
+        {isOwnProduct && (
+          <TouchableOpacity style={styles.listDeleteBtn} onPress={() => handleDeletePress(item.id)}>
+            <Trash2 color={theme.error} size={20} />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle="dark-content" />
       
       {/* Header Bar */}
-      <View style={[styles.topBar, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 8, backgroundColor: theme.background }]}>
         <Text style={[styles.topBarTitle, { color: theme.text }]}>{currentUser.username}</Text>
-        <TouchableOpacity style={styles.settingsBtn} onPress={() => router.push('/(app)/settings')}>
-          <Settings color={theme.text} size={24} strokeWidth={1.5}/>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/(app)/receipts')}>
+            <ReceiptText color={theme.text} size={22} strokeWidth={1.8}/>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/(app)/settings')}>
+            <Settings color={theme.text} size={22} strokeWidth={1.8}/>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
-        data={userListings}
+        data={displayListings}
         key={activeTab} // Force re-render when tab changes
-        numColumns={activeTab === 'grid' ? COLUMN_COUNT : 1}
-        renderItem={activeTab === 'grid' ? renderGridItem : renderListItem}
+        numColumns={activeTab === 'list' ? 1 : COLUMN_COUNT}
+        renderItem={activeTab === 'list' ? renderListItem : renderGridItem}
         keyExtractor={(item) => item.id}
-        columnWrapperStyle={activeTab === 'grid' ? { gap: GAP } : undefined}
+        columnWrapperStyle={activeTab === 'list' ? undefined : { gap: GAP }}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
@@ -196,7 +223,7 @@ export default function ProfileScreen() {
                   style={styles.avatar}
                 />
                 {isEditing && (
-                  <TouchableOpacity style={[styles.editBadge, { backgroundColor: theme.purple }]} onPress={pickImage}>
+                  <TouchableOpacity style={[styles.editBadge, { backgroundColor: theme.primary }]} onPress={pickImage}>
                     <Camera size={14} color="white" />
                   </TouchableOpacity>
                 )}
@@ -205,7 +232,7 @@ export default function ProfileScreen() {
               <View style={styles.infoContainer}>
                 {isEditing ? (
                   <TextInput
-                    style={[styles.editInput, { color: theme.text, borderColor: theme.surface }]}
+                    style={[styles.editInput, { color: theme.text, borderColor: theme.secondaryBackground }]}
                     value={newUsername}
                     onChangeText={setNewUsername}
                     placeholder="Username"
@@ -214,7 +241,7 @@ export default function ProfileScreen() {
                 ) : (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={[styles.nameText, { color: theme.text, marginBottom: 0 }]}>{currentUser.name}</Text>
-                    {currentUser.isVerified && <BadgeCheck size={20} color={theme.purple} fill={theme.lightPurple || '#F3E8FF'} />}
+                    {currentUser.isVerified && <BadgeCheck size={20} color={theme.primary} />}
                   </View>
                 )}
                 
@@ -224,12 +251,12 @@ export default function ProfileScreen() {
                     <Text style={[styles.statVal, { color: theme.text }]}>{userListings.length}</Text>
                     <Text style={[styles.statLabel, { color: theme.secondaryText }]}>Posts</Text>
                   </View>
-                  <View style={[styles.statDivider, { backgroundColor: theme.surface }]} />
+                  <View style={[styles.statDivider, { backgroundColor: theme.secondaryBackground }]} />
                   <View style={styles.stat}>
                     <Text style={[styles.statVal, { color: theme.text }]}>{currentUser.followers || 0}</Text>
                     <Text style={[styles.statLabel, { color: theme.secondaryText }]}>Followers</Text>
                   </View>
-                  <View style={[styles.statDivider, { backgroundColor: theme.surface }]} />
+                  <View style={[styles.statDivider, { backgroundColor: theme.secondaryBackground }]} />
                   <View style={styles.stat}>
                     <Text style={[styles.statVal, { color: theme.text }]}>{currentUser.following || 0}</Text>
                     <Text style={[styles.statLabel, { color: theme.secondaryText }]}>Following</Text>
@@ -243,14 +270,14 @@ export default function ProfileScreen() {
               {isEditing ? (
                 <View style={styles.editActions}>
                   <TouchableOpacity 
-                    style={[styles.actionBtn, styles.cancelBtn, { borderColor: theme.secondaryText }]} 
+                    style={[styles.actionBtn, styles.cancelBtn, { borderColor: theme.secondaryBackground }]} 
                     onPress={() => setIsEditing(false)}
                     disabled={isSaving}
                   >
                     <Text style={[styles.btnLabel, { color: theme.text }]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.actionBtn, { backgroundColor: theme.purple, flex: 1 }]} 
+                    style={[styles.actionBtn, { backgroundColor: theme.primary, flex: 1 }]} 
                     onPress={handleSave}
                     disabled={isSaving}
                   >
@@ -263,7 +290,7 @@ export default function ProfileScreen() {
                 </View>
               ) : (
                 <TouchableOpacity 
-                  style={[styles.actionBtn, styles.editProfileBtn, { backgroundColor: theme.surface }]} 
+                  style={[styles.actionBtn, styles.editProfileBtn, { backgroundColor: theme.surface, borderWidth: 1, borderColor: '#F1F5F9' }]} 
                   onPress={() => setIsEditing(true)}
                 >
                   <Text style={[styles.btnLabel, { color: theme.text }]}>Edit Profile</Text>
@@ -272,18 +299,24 @@ export default function ProfileScreen() {
             </View>
 
             {/* Tabs */}
-            <View style={[styles.tabBar, { borderTopColor: theme.surface, borderBottomColor: theme.surface }]}>
+            <View style={[styles.tabBar, { borderTopColor: theme.secondaryBackground, borderBottomColor: theme.secondaryBackground }]}>
               <TouchableOpacity 
                 onPress={() => setActiveTab('grid')} 
-                style={[styles.tabItem, activeTab === 'grid' && { borderBottomColor: theme.text }]}
+                style={[styles.tabItem, activeTab === 'grid' && { borderBottomColor: theme.primary }]}
               >
-                <Grid size={24} color={activeTab === 'grid' ? theme.text : theme.secondaryText} />
+                <Grid size={24} color={activeTab === 'grid' ? theme.primary : theme.mutedText} />
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => setActiveTab('list')} 
-                style={[styles.tabItem, activeTab === 'list' && { borderBottomColor: theme.text }]}
+                style={[styles.tabItem, activeTab === 'list' && { borderBottomColor: theme.primary }]}
               >
-                <List size={24} color={activeTab === 'list' ? theme.text : theme.secondaryText} />
+                <List size={24} color={activeTab === 'list' ? theme.primary : theme.mutedText} />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => setActiveTab('favorites')} 
+                style={[styles.tabItem, activeTab === 'favorites' && { borderBottomColor: theme.primary }]}
+              >
+                <Heart size={24} color={activeTab === 'favorites' ? theme.primary : theme.mutedText} />
               </TouchableOpacity>
             </View>
           </>
@@ -291,11 +324,19 @@ export default function ProfileScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={[styles.emptyIcon, { backgroundColor: theme.surface }]}>
-              <Grid size={32} color={theme.secondaryText} />
+              {activeTab === 'favorites' ? (
+                <Heart size={32} color={theme.secondaryText} />
+              ) : (
+                <Grid size={32} color={theme.secondaryText} />
+              )}
             </View>
-            <Text style={[styles.emptyText, { color: theme.text }]}>No Listings Yet</Text>
+            <Text style={[styles.emptyText, { color: theme.text }]}>
+              {activeTab === 'favorites' ? 'No Favorites Yet' : 'No Listings Yet'}
+            </Text>
             <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
-              Items you list for sale will appear here.
+              {activeTab === 'favorites' 
+                ? 'Items you heart will appear here.' 
+                : 'Items you list for sale will appear here.'}
             </Text>
           </View>
         }
@@ -319,7 +360,8 @@ const styles = StyleSheet.create({
   // Top Bar
   topBar: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.05)' },
   topBarTitle: { fontSize: 16, fontWeight: '700' },
-  settingsBtn: { position: 'absolute', right: 16, bottom: 10 },
+  headerActions: { position: 'absolute', right: 16, bottom: 10, flexDirection: 'row', gap: 16 },
+  headerBtn: { },
 
   // Profile Header
   profileHeader: { padding: 20, flexDirection: 'row', alignItems: 'center' },

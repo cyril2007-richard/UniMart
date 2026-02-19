@@ -1,28 +1,28 @@
-const primaryPurple = '#6B21A8'; // Deep Purple
-const primaryGold = '#B45309';   // Dark Gold for contrast
-const accentGold = '#F59E0B';    // Brighter Gold for non-text accents
-const appBackground = '#F8F9FA'; // Very Light Grey
-const surfaceWhite = '#FFFFFF';  // White
+const primaryAccent = '#2563EB';
+const mainBackground = '#F7F8FA';
+const surfaceWhite = '#FFFFFF';
+const secondaryBackground = '#EEF1F4';
 
 const commonColors = {
-  text: '#1A1A1A',
-  background: appBackground,
-  tint: primaryPurple,
-  tabIconDefault: '#9CA3AF',
-  tabIconSelected: primaryPurple,
-  
-  purple: primaryPurple,
-  gold: primaryGold,
-  accentGold: accentGold,
-  lightPurple: '#F3E8FF', // Light purple tint
-  white: '#FFFFFF',
-  black: '#000000',
-  secondaryText: '#4B5563', // Dark Grey
+  text: '#0F172A',
+  secondaryText: '#475569',
+  mutedText: '#94A3B8',
+  background: mainBackground,
+  secondaryBackground: secondaryBackground,
   surface: surfaceWhite,
+  tint: primaryAccent,
+  tabIconDefault: '#94A3B8',
+  tabIconSelected: primaryAccent,
   
-  // Validation only
-  success: '#10B981',
-  danger: '#EF4444',
+  primary: primaryAccent,
+  white: '#FFFFFF',
+  black: '#0F172A',
+  
+  // Status Colors
+  success: '#16A34A',
+  warning: '#F59E0B',
+  danger: '#DC2626',
+  error: '#DC2626',
 };
 
 export default {

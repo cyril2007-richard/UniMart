@@ -12,16 +12,20 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator
+  ActivityIndicator,
+  Dimensions
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import * as Clipboard from 'expo-clipboard';
 import * as Location from 'expo-location';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import Colors from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { db } from '../firebase';
+
+const { width } = Dimensions.get('window');
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -39,7 +43,7 @@ export default function CheckoutScreen() {
           You must be logged in to checkout.
         </Text>
         <TouchableOpacity 
-          style={[styles.payButton, { backgroundColor: theme.purple, width: 'auto', paddingHorizontal: 40 }]}
+          style={[styles.payButton, { backgroundColor: theme.primary, width: 'auto', paddingHorizontal: 40 }]}
           onPress={() => router.push('/(auth)/login')}
         >
           <Text style={styles.payButtonText}>Login Now</Text>
@@ -51,27 +55,26 @@ export default function CheckoutScreen() {
   // Parse single buy now item if present
   const buyNowItem = params.buyNowItem ? JSON.parse(params.buyNowItem as string) : null;
   
-  const [deliveryMethod, setDeliveryMethod] = useState<'rider' | 'pickup'>('rider');
+  const deliveryMethod = 'rider';
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | 'ussd'>('card');
   const [address, setAddress] = useState('');
+  const [region, setRegion] = useState({
+    latitude: 6.5244, // Default to Lagos/Nigeria coordinates
+    longitude: 3.3792,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState(500);
-
-  useEffect(() => {
-    if (deliveryMethod === 'pickup') {
-      setDeliveryFee(0);
-    } else {
-      setDeliveryFee(500); // Flat rate for now
-    }
-  }, [deliveryMethod]);
 
   const itemsToCheckout = buyNowItem ? [buyNowItem] : cartItems.filter(item => item.selected);
   const subtotal = buyNowItem 
     ? buyNowItem.price 
     : itemsToCheckout.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   
-  const grandTotal = subtotal + deliveryFee;
+  // Service fee: 12% of subtotal, capped at 1000
+  const serviceFee = Math.min(subtotal * 0.12, 1000);
+  const grandTotal = subtotal + serviceFee;
 
   const handleCopy = async (text: string) => {
     await Clipboard.setStringAsync(text);
@@ -81,7 +84,7 @@ export default function CheckoutScreen() {
   const handleUseLocation = async () => {
     Alert.alert(
       "Allow Location Access",
-      "UniMart uses your location to help the rider find your hostel/room for delivery.",
+      "UniMart uses your location to help the rider find your delivery address.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -97,9 +100,17 @@ export default function CheckoutScreen() {
               }
 
               let location = await Location.getCurrentPositionAsync({});
+              const { latitude, longitude } = location.coords;
+              
+              setRegion({
+                ...region,
+                latitude,
+                longitude,
+              });
+
               let addressResponse = await Location.reverseGeocodeAsync({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude
+                latitude,
+                longitude
               });
 
               if (addressResponse.length > 0) {
@@ -126,8 +137,8 @@ export default function CheckoutScreen() {
   };
 
   const handlePayment = async () => {
-    if (deliveryMethod === 'rider' && !address.trim()) {
-      Alert.alert('Address Required', 'Please enter your delivery address (Hostel/Room No).');
+    if (!address.trim()) {
+      Alert.alert('Address Required', 'Please enter your delivery address.');
       return;
     }
 
@@ -135,18 +146,11 @@ export default function CheckoutScreen() {
     
     // Simulate payment processing delay
     setTimeout(async () => {
-      // Notify Buyer
-      if (deliveryMethod === 'rider') {
-          addNotification(
-              'Payment Successful! Your rider (Mike) is on the way. Contact: 08123456789',
-              'success'
-          );
-      } else {
-          addNotification(
-              'Payment Successful! Please proceed to the pickup location.',
-              'success'
-          );
-      }
+      // Notify Buyer - Update message to reflect rider search
+      addNotification(
+          'Payment Successful! searching for a rider near you...',
+          'success'
+      );
 
       // Notify Sellers
       const itemsBySeller: { [key: string]: any[] } = {};
@@ -157,7 +161,7 @@ export default function CheckoutScreen() {
           itemsBySeller[item.sellerId].push(item);
       });
 
-          // Send notification to each seller
+          // Send notification to each seller & Create Logistics Order
           for (const sellerId in itemsBySeller) {
               const sellerItems = itemsBySeller[sellerId];
               const itemNames = sellerItems.map(i => i.name || i.title).join(', ');
@@ -166,10 +170,42 @@ export default function CheckoutScreen() {
               try {
                   const notificationsRef = collection(db, 'users', sellerId, 'notifications');
                   await addDoc(notificationsRef, {
-                      message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}.`,
+                      message: `New Order! ${currentUser?.name || 'A buyer'} paid ₦${totalAmount.toLocaleString()} for: ${itemNames}. Rider will arrive soon.`,
                       type: 'success',
                       read: false,
                       createdAt: serverTimestamp()
+                  });
+
+                  // Create Receipt Reference first to link it
+                  const receiptRef = doc(collection(db, 'receipts'));
+
+                  // Generate 6-digit confirmation code
+                  const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+                  // Create Order for Rider App
+                  await addDoc(collection(db, 'orders'), {
+                    customerId: currentUser.id,
+                    customerName: currentUser.name,
+                    customerPhone: currentUser.phoneNumber || "",
+                    sellerId: sellerId,
+                    items: sellerItems.map(i => ({ id: i.id, title: i.name || i.title, quantity: i.quantity || 1 })),
+                    pickupLocation: {
+                      lat: 6.5170, // Mock Seller Location (e.g. Campus Center)
+                      lng: 3.3700,
+                      address: "Campus Main Gate (Seller Point)"
+                    },
+                    dropoffLocation: {
+                      lat: region.latitude,
+                      lng: region.longitude,
+                      address: address
+                    },
+                    status: "pending",
+                    commissionAmount: 500, // Fixed commission
+                    riderId: null,
+                    receiptId: receiptRef.id, // LINK TO RECEIPT
+                    confirmationCode: confirmationCode, // SECURE CODE
+                    createdAt: serverTimestamp(),
+                    sellerVerifiedPickup: false
                   });
 
                   // Record the payment for the web interface
@@ -182,20 +218,61 @@ export default function CheckoutScreen() {
                       status: 'completed',
                       paymentMethod: paymentMethod,
                       deliveryMethod: deliveryMethod,
+                      receiptId: receiptRef.id,
                       createdAt: serverTimestamp()
                   });
-              } catch (error: any) {
-                  // Silently fail if permissions are missing to avoid interrupting the checkout flow
-                  if (error.code === 'permission-denied') {
-                    console.warn(`Permission denied sending notification to seller ${sellerId}. Check Firestore rules.`);
-                  } else {
-                    console.error(`Failed to notify seller ${sellerId}`, error);
+
+                  // NEW: Record sales in the listing subcollection for Seller Insights
+                  for (const item of sellerItems) {
+                      const salesRef = collection(db, 'listings', item.id, 'sales');
+                      await addDoc(salesRef, {
+                          buyerId: currentUser.id,
+                          buyerName: currentUser.name,
+                          quantity: item.quantity || 1,
+                          price: item.price,
+                          total: (item.price * (item.quantity || 1)),
+                          paymentMethod: paymentMethod,
+                          receiptId: receiptRef.id,
+                          createdAt: serverTimestamp()
+                      });
                   }
-              }
-          }
-
-          setIsProcessing(false);
-
+                                } catch (error: any) {
+                                // Silently fail if permissions are missing to avoid interrupting the checkout flow
+                                if (error.code === 'permission-denied') {
+                                  console.warn(`Permission denied sending notification to seller ${sellerId}. Check Firestore rules.`);
+                                } else {
+                                  console.error(`Failed to notify seller ${sellerId}`, error);
+                                }
+                            }
+                        }
+              
+                        // Record the overall receipt for the buyer
+                        try {
+                            // Use setDoc with the pre-generated reference
+                            await setDoc(receiptRef, {
+                                buyerId: currentUser.id,
+                                buyerName: currentUser.name,
+                                items: itemsToCheckout.map(i => ({ 
+                                    id: i.id, 
+                                    title: i.name || i.title, 
+                                    price: i.price, 
+                                    quantity: i.quantity || 1,
+                                    image: i.image || i.images?.[0]
+                                })),
+                                subtotal: subtotal,
+                                serviceFee: serviceFee,
+                                totalAmount: grandTotal,
+                                paymentMethod: paymentMethod,
+                                deliveryMethod: deliveryMethod,
+                                status: 'pending', // Initial status
+                                confirmationCode: confirmationCode, // Store locally too for display
+                                createdAt: serverTimestamp()
+                            });
+                        } catch (error) {
+                            console.error('Failed to record receipt:', error);
+                        }
+              
+                        setIsProcessing(false);
           if (!buyNowItem) {
             await clearCart(); // Only clear cart if it was a cart checkout
           }
@@ -243,11 +320,11 @@ export default function CheckoutScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={[styles.transferValue, { color: theme.text, marginRight: 8 }]}>1234567890</Text>
                 <TouchableOpacity onPress={() => handleCopy('1234567890')}>
-                  <Copy size={16} color={theme.purple} />
+                  <Copy size={16} color={theme.primary} />
                 </TouchableOpacity>
               </View>
             </View>
-            <Text style={[styles.transferNote, { color: theme.purple }]}>
+            <Text style={[styles.transferNote, { color: theme.primary }]}>
               Please use your Order ID as the payment reference.
             </Text>
           </View>
@@ -256,8 +333,8 @@ export default function CheckoutScreen() {
         return (
           <View style={[styles.ussdBox, { backgroundColor: theme.surface }]}>
             <Text style={[styles.ussdCode, { color: theme.text }]}>*894*000*543#</Text>
-            <TouchableOpacity style={[styles.dialButton, { borderColor: theme.purple }]}>
-              <Text style={[styles.dialText, { color: theme.purple }]}>Tap to Dial</Text>
+            <TouchableOpacity style={[styles.dialButton, { borderColor: theme.primary }]}>
+              <Text style={[styles.dialText, { color: theme.primary }]}>Tap to Dial</Text>
             </TouchableOpacity>
           </View>
         );
@@ -274,7 +351,7 @@ export default function CheckoutScreen() {
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <ShieldCheck size={20} color={theme.purple} />
+            <ShieldCheck size={20} color={theme.primary} />
             <Text style={[styles.title, { color: theme.text }]}>Secure Checkout</Text>
         </View>
         <View style={{ width: 24 }} />
@@ -303,60 +380,50 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {/* 2. Delivery Options */}
+        {/* 2. Delivery Details */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Delivery Method</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Delivery Address</Text>
           
-          <View style={styles.methodGroup}>
-            <TouchableOpacity 
-                style={[
-                    styles.methodCard, 
-                    { backgroundColor: theme.surface, borderColor: deliveryMethod === 'rider' ? theme.purple : 'transparent', borderWidth: 2 }
-                ]}
-                onPress={() => setDeliveryMethod('rider')}
-            >
-                <Bike size={24} color={deliveryMethod === 'rider' ? theme.purple : theme.tabIconDefault} />
-                <Text style={[styles.methodTitle, { color: theme.text }]}>UniMart Rider</Text>
-                <Text style={[styles.methodPrice, { color: theme.purple }]}>+₦500</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-                style={[
-                    styles.methodCard, 
-                    { backgroundColor: theme.surface, borderColor: deliveryMethod === 'pickup' ? theme.purple : 'transparent', borderWidth: 2 }
-                ]}
-                onPress={() => setDeliveryMethod('pickup')}
-            >
-                <User size={24} color={deliveryMethod === 'pickup' ? theme.purple : theme.tabIconDefault} />
-                <Text style={[styles.methodTitle, { color: theme.text }]}>Self Pickup</Text>
-                <Text style={[styles.methodPrice, { color: theme.purple }]}>Free</Text>
-            </TouchableOpacity>
+          <View style={[styles.addressInputContainer, { backgroundColor: theme.surface }]}>
+              <MapPin size={20} color={theme.secondaryText} style={{ marginRight: 10 }} />
+              <TextInput
+                placeholder="Enter Delivery Address"
+                placeholderTextColor={theme.secondaryText}
+                style={[styles.addressInput, { color: theme.text }]}
+                value={address}
+                onChangeText={setAddress}
+              />
+              <TouchableOpacity onPress={handleUseLocation} disabled={isLocating} style={{ padding: 8 }}>
+                {isLocating ? (
+                  <ActivityIndicator size="small" color={theme.primary} />
+                ) : (
+                  <LocateFixed size={20} color={theme.primary} />
+                )}
+              </TouchableOpacity>
           </View>
 
-          {deliveryMethod === 'rider' && (
-              <View style={[styles.addressInputContainer, { backgroundColor: theme.surface }]}>
-                  <MapPin size={20} color={theme.secondaryText} style={{ marginRight: 10 }} />
-                  <TextInput
-                    placeholder="Enter Hostel & Room Number"
-                    placeholderTextColor={theme.secondaryText}
-                    style={[styles.addressInput, { color: theme.text }]}
-                    value={address}
-                    onChangeText={setAddress}
-                  />
-                  <TouchableOpacity onPress={handleUseLocation} disabled={isLocating} style={{ padding: 8 }}>
-                    {isLocating ? (
-                      <ActivityIndicator size="small" color={theme.purple} />
-                    ) : (
-                      <LocateFixed size={20} color={theme.purple} />
-                    )}
-                  </TouchableOpacity>
-              </View>
-          )}
-           {deliveryMethod === 'pickup' && (
-              <View style={[styles.pickupNote, { backgroundColor: theme.lightPurple }]}>
-                  <Text style={{ color: theme.purple, fontSize: 13 }}>You will meet the seller at an agreed location on campus.</Text>
-              </View>
-          )}
+          <View style={[styles.mapContainer, { borderColor: theme.surface }]}>
+            <MapView
+              style={styles.map}
+              region={region}
+              mapType="satellite"
+            >
+              <Marker
+                coordinate={{
+                  latitude: region.latitude,
+                  longitude: region.longitude,
+                }}
+                title="Delivery Location"
+                pinColor={theme.primary}
+              />
+            </MapView>
+          </View>
+
+          <View style={[styles.pickupNote, { backgroundColor: theme.secondaryBackground, marginTop: 12 }]}>
+              <Text style={{ color: theme.secondaryText, fontSize: 13 }}>
+                Orders are delivered by UniMart Riders to your campus doorstep.
+              </Text>
+          </View>
         </View>
 
         {/* 3. Payment Method */}
@@ -365,21 +432,21 @@ export default function CheckoutScreen() {
           
           <View style={[styles.paymentTabs, { backgroundColor: theme.surface }]}>
             <TouchableOpacity 
-                style={[styles.paymentTab, paymentMethod === 'card' && { backgroundColor: theme.purple }]}
+                style={[styles.paymentTab, paymentMethod === 'card' && { backgroundColor: theme.primary }]}
                 onPress={() => setPaymentMethod('card')}
             >
                 <CreditCard size={20} color={paymentMethod === 'card' ? 'white' : theme.secondaryText} />
                 <Text style={[styles.paymentTabText, { color: paymentMethod === 'card' ? 'white' : theme.secondaryText }]}>Card</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-                style={[styles.paymentTab, paymentMethod === 'transfer' && { backgroundColor: theme.purple }]}
+                style={[styles.paymentTab, paymentMethod === 'transfer' && { backgroundColor: theme.primary }]}
                 onPress={() => setPaymentMethod('transfer')}
             >
                 <Building2 size={20} color={paymentMethod === 'transfer' ? 'white' : theme.secondaryText} />
                 <Text style={[styles.paymentTabText, { color: paymentMethod === 'transfer' ? 'white' : theme.secondaryText }]}>Transfer</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-                style={[styles.paymentTab, paymentMethod === 'ussd' && { backgroundColor: theme.purple }]}
+                style={[styles.paymentTab, paymentMethod === 'ussd' && { backgroundColor: theme.primary }]}
                 onPress={() => setPaymentMethod('ussd')}
             >
                 <Phone size={20} color={paymentMethod === 'ussd' ? 'white' : theme.secondaryText} />
@@ -399,12 +466,12 @@ export default function CheckoutScreen() {
                 <Text style={{ color: theme.text }}>₦{subtotal.toLocaleString()}</Text>
             </View>
             <View style={styles.billRow}>
-                <Text style={{ color: theme.secondaryText }}>Delivery Fee</Text>
-                <Text style={{ color: theme.text }}>₦{deliveryFee.toLocaleString()}</Text>
+                <Text style={{ color: theme.secondaryText }}>Service Fee</Text>
+                <Text style={{ color: theme.text }}>₦{serviceFee.toLocaleString()}</Text>
             </View>
             <View style={[styles.billRow, styles.totalRow, { borderTopColor: theme.background }]}>
-                <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 18 }}>Grand Total</Text>
-                <Text style={{ color: theme.purple, fontWeight: 'bold', fontSize: 20 }}>₦{grandTotal.toLocaleString()}</Text>
+                <Text style={{ color: theme.text, fontWeight: '700', fontSize: 18 }}>Grand Total</Text>
+                <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 20 }}>₦{grandTotal.toLocaleString()}</Text>
             </View>
         </View>
 
@@ -414,7 +481,7 @@ export default function CheckoutScreen() {
       {/* Sticky Footer */}
       <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: theme.surface }]}>
         <TouchableOpacity 
-            style={[styles.payButton, { backgroundColor: theme.purple }]}
+            style={[styles.payButton, { backgroundColor: theme.primary }]}
             onPress={handlePayment}
             disabled={isProcessing}
         >
@@ -426,7 +493,7 @@ export default function CheckoutScreen() {
         </TouchableOpacity>
         <View style={styles.securityNote}>
             <ShieldCheck size={14} color={theme.secondaryText} />
-            <Text style={[styles.securityText, { color: theme.secondaryText }]}>Payments secured by Paystack</Text>
+            <Text style={[styles.securityText, { color: theme.secondaryText }]}>Payments secured by Endow</Text>
         </View>
       </View>
 
@@ -467,6 +534,17 @@ const styles = StyleSheet.create({
   
   addressInputContainer: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12 },
   addressInput: { flex: 1, fontSize: 15 },
+  mapContainer: {
+    height: 200,
+    width: '100%',
+    borderRadius: 12,
+    marginTop: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
   pickupNote: { padding: 12, borderRadius: 8 },
 
   paymentTabs: { flexDirection: 'row', padding: 4, borderRadius: 12, marginBottom: 16 },

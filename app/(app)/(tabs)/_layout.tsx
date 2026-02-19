@@ -25,7 +25,7 @@ function TabIcon({
     },
     activeDot: {
       position: 'absolute',
-      bottom: 0,
+      bottom: 2,
       width: 4,
       height: 4,
       borderRadius: 2,
@@ -34,7 +34,7 @@ function TabIcon({
   });
   return (
     <View style={styles.iconContainer}>
-      <Icon size={24} color={color} strokeWidth={focused ? 2 : 1.5} />
+      <Icon size={24} color={color} strokeWidth={focused ? 2.2 : 1.8} />
       {focused && <View style={styles.activeDot} />}
     </View>
   );
@@ -50,11 +50,14 @@ export default function TabLayout() {
           headerShown: false,
           tabBarShowLabel: false,
           tabBarStyle: {
-            height: Platform.OS === 'ios' ? 90 : 70,
-            paddingBottom: Platform.OS === 'ios' ? 30 : 10,
-            paddingTop: 16,
-            backgroundColor: colors.background,
-            borderTopWidth: 0,
+            height: Platform.OS === 'ios' ? 88 : 68,
+            paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+            paddingTop: 12,
+            backgroundColor: '#FFFFFF',
+            borderTopWidth: 1,
+            borderTopColor: '#F1F5F9',
+            elevation: 0,
+            shadowOpacity: 0,
           },
           tabBarActiveTintColor: colors.tint,
           tabBarInactiveTintColor: colors.tabIconDefault,

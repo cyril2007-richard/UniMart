@@ -20,6 +20,7 @@ interface ListingsContextType {
   addListing: (listing: Omit<Listing, 'id'>) => Promise<void>;
   deleteListing: (listingId: string) => Promise<void>;
   loading: boolean;
+  refreshListings: () => Promise<void>;
 }
 
 const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
@@ -28,22 +29,27 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const listingsCollection = collection(db, 'listings');
-        const listingsSnapshot = await getDocs(listingsCollection);
-        const listingsData = listingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Listing));
-        setListings(listingsData);
-      } catch (error) {
-        console.error("Error fetching listings: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchListings = async () => {
+    try {
+      const listingsCollection = collection(db, 'listings');
+      const listingsSnapshot = await getDocs(listingsCollection);
+      const listingsData = listingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Listing));
+      setListings(listingsData);
+    } catch (error) {
+      console.error("Error fetching listings: ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchListings();
   }, []);
+
+  const refreshListings = async () => {
+    setLoading(true);
+    await fetchListings();
+  };
 
   const addListing = async (listing: Omit<Listing, 'id'>) => {
     try {
@@ -76,7 +82,7 @@ export const ListingsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <ListingsContext.Provider value={{ listings, addListing, deleteListing, loading }}>
+    <ListingsContext.Provider value={{ listings, addListing, deleteListing, loading, refreshListings }}>
       {children}
     </ListingsContext.Provider>
   );

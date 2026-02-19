@@ -19,12 +19,12 @@ export default function ApplyScreen() {
   const theme = Colors.light;
 
   const handleEmail = () => {
-    Linking.openURL('mailto:riders@unimart.com?subject=Rider Application&body=Name:%0AStudent ID:%0AIntroduction:');
+    Linking.openURL('mailto:riders@unimart.com?subject=Rider Application&body=Name:%0AID Number:%0AIntroduction:');
   };
 
   const requirements = [
     'A bicycle or scooter in good condition',
-    'A valid student ID card',
+    'A valid ID card',
     'Smartphone with data connection',
     'Friendly and reliable attitude'
   ];
@@ -34,11 +34,11 @@ export default function ApplyScreen() {
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Rider Application</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Earn Locally</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -48,12 +48,12 @@ export default function ApplyScreen() {
       >
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={[styles.heroIconCircle, { backgroundColor: theme.surface }]}>
-            <Bike size={48} color={theme.purple} strokeWidth={1.5} />
+          <View style={[styles.heroIconCircle, { backgroundColor: theme.secondaryBackground }]}>
+            <Bike size={48} color={theme.primary} strokeWidth={1.5} />
           </View>
-          <Text style={[styles.heroTitle, { color: theme.text }]}>Earn While You Study</Text>
+          <Text style={[styles.heroTitle, { color: theme.text }]}>Become a Rider</Text>
           <Text style={[styles.heroSubtitle, { color: theme.secondaryText }]}>
-            Join the UniMart fleet. Deliver items across campus on your own schedule and get paid instantly.
+            Deliver items in your local area on your own schedule and get paid instantly.
           </Text>
         </View>
 
@@ -62,9 +62,9 @@ export default function ApplyScreen() {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>What You Need</Text>
           <View style={styles.requirementsGrid}>
             {requirements.map((req, index) => (
-              <View key={index} style={[styles.reqCard, { backgroundColor: theme.surface }]}>
-                <View style={[styles.checkCircle, { backgroundColor: theme.purple }]}>
-                    <Check size={14} color="white" strokeWidth={2} />
+              <View key={index} style={[styles.reqCard, { backgroundColor: theme.surface, borderWidth: 1, borderColor: '#F1F5F9' }]}>
+                <View style={[styles.checkCircle, { backgroundColor: theme.primary }]}>
+                    <Check size={14} color="white" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.reqText, { color: theme.text }]}>{req}</Text>
               </View>
@@ -75,37 +75,37 @@ export default function ApplyScreen() {
         {/* Process Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>How It Works</Text>
-          <View style={[styles.processCard, { backgroundColor: theme.surface }]}>
+          <View style={[styles.processCard, { backgroundColor: theme.surface, borderWidth: 1, borderColor: '#F1F5F9' }]}>
              <View style={styles.processStep}>
-                <View style={styles.stepNumber}><Text style={styles.stepNumText}>1</Text></View>
-                <Text style={[styles.stepText, { color: theme.text }]}>Send your application</Text>
+                <View style={[styles.stepNumber, { backgroundColor: theme.secondaryBackground }]}><Text style={[styles.stepNumText, { color: theme.text }]}>1</Text></View>
+                <Text style={[styles.stepText, { color: theme.text }]}>Submit application</Text>
              </View>
              <View style={styles.stepLine} />
              <View style={styles.processStep}>
-                <View style={styles.stepNumber}><Text style={styles.stepNumText}>2</Text></View>
-                <Text style={[styles.stepText, { color: theme.text }]}>Get verified in 24hrs</Text>
+                <View style={[styles.stepNumber, { backgroundColor: theme.secondaryBackground }]}><Text style={[styles.stepNumText, { color: theme.text }]}>2</Text></View>
+                <Text style={[styles.stepText, { color: theme.text }]}>Verify ID in 24hrs</Text>
              </View>
              <View style={styles.stepLine} />
              <View style={styles.processStep}>
-                <View style={styles.stepNumber}><Text style={styles.stepNumText}>3</Text></View>
-                <Text style={[styles.stepText, { color: theme.text }]}>Start accepting orders</Text>
+                <View style={[styles.stepNumber, { backgroundColor: theme.secondaryBackground }]}><Text style={[styles.stepNumText, { color: theme.text }]}>3</Text></View>
+                <Text style={[styles.stepText, { color: theme.text }]}>Start earning</Text>
              </View>
           </View>
         </View>
 
         {/* Trust Badge */}
-        <View style={[styles.trustBadge, { backgroundColor: 'rgba(39, 174, 96, 0.1)' }]}>
-            <ShieldCheck size={20} color="#27ae60" />
+        <View style={[styles.trustBadge, { backgroundColor: 'rgba(22, 163, 74, 0.05)' }]}>
+            <ShieldCheck size={18} color="#16A34A" />
             <Text style={styles.trustText}>Secure Payments & Verified IDs</Text>
         </View>
 
       </ScrollView>
 
       {/* Sticky Footer */}
-      <View style={[styles.footer, { backgroundColor: theme.background, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: theme.surface, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity 
-          style={[styles.applyButton, { backgroundColor: theme.purple }]} 
-          activeOpacity={0.8}
+          style={[styles.applyButton, { backgroundColor: theme.primary }]} 
+          activeOpacity={0.9}
           onPress={handleEmail}
         >
           <Mail color="white" size={20} />

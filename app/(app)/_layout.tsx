@@ -9,6 +9,7 @@ export default function AppLayout() {
         <Stack.Screen name="announcement" />
         <Stack.Screen name="cart" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="receipts" />
         <Stack.Screen name="add" />
         <Stack.Screen name="apply" />
         <Stack.Screen name="search" />

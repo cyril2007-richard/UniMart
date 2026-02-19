@@ -34,20 +34,20 @@ export default function AnnouncementScreen() {
       case 'success':
         return {
           icon: CheckCircle,
-          color: '#27ae60',
-          bg: 'rgba(39, 174, 96, 0.1)', // Light green
+          color: '#16A34A',
+          bg: 'rgba(22, 163, 74, 0.05)',
         };
       case 'error':
         return {
           icon: AlertCircle,
-          color: '#e74c3c',
-          bg: 'rgba(231, 76, 60, 0.1)', // Light red
+          color: '#DC2626',
+          bg: 'rgba(220, 38, 38, 0.05)',
         };
       default:
         return {
           icon: Info,
-          color: '#2980b9',
-          bg: 'rgba(41, 128, 185, 0.1)', // Light blue
+          color: theme.primary,
+          bg: 'rgba(37, 99, 235, 0.05)',
         };
     }
   };
@@ -57,7 +57,7 @@ export default function AnnouncementScreen() {
     const IconComponent = styleConfig.icon;
 
     return (
-      <View style={[styles.notificationCard, { backgroundColor: theme.background }]}>
+      <View style={[styles.notificationCard, { backgroundColor: theme.surface }]}>
         {/* Icon Container */}
         <View style={[styles.iconContainer, { backgroundColor: styleConfig.bg }]}>
           <IconComponent size={20} color={styleConfig.color} strokeWidth={2} />
@@ -68,7 +68,7 @@ export default function AnnouncementScreen() {
             <Text style={[styles.messageText, { color: theme.text }]}>
                 {item.message}
             </Text>
-            <Text style={[styles.timeText, { color: theme.secondaryText }]}>Just now</Text>
+            <Text style={[styles.timeText, { color: theme.mutedText }]}>Recently</Text>
         </View>
         
         {/* Dismiss Button */}
@@ -77,7 +77,7 @@ export default function AnnouncementScreen() {
             style={styles.closeButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <X size={18} color={theme.secondaryText} />
+          <X size={18} color={theme.mutedText} />
         </TouchableOpacity>
       </View>
     );
@@ -88,7 +88,7 @@ export default function AnnouncementScreen() {
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
@@ -100,11 +100,11 @@ export default function AnnouncementScreen() {
       {notifications.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={[styles.emptyIconCircle, { backgroundColor: theme.surface }]}>
-            <BellOff size={48} color={theme.secondaryText} />
+            <BellOff size={48} color={theme.mutedText} />
           </View>
-          <Text style={[styles.emptyTitle, { color: theme.text }]}>No Notifications</Text>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>All Caught Up</Text>
           <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
-            You're all caught up! Check back later for updates.
+            You have no new notifications at the moment.
           </Text>
         </View>
       ) : (

@@ -108,7 +108,7 @@ export default function SellerProfileScreen() {
   if (!seller) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.purple} />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -118,7 +118,7 @@ export default function SellerProfileScreen() {
   const renderHeader = () => (
     <View style={{ backgroundColor: theme.background }}>
       {/* Navbar */}
-      <View style={[styles.navbar, { paddingTop: insets.top }]}>
+      <View style={[styles.navbar, { paddingTop: insets.top + 8, backgroundColor: theme.background }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
@@ -154,7 +154,7 @@ export default function SellerProfileScreen() {
         <View style={styles.bioContainer}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={[styles.realName, { color: theme.text }]}>{seller.name}</Text>
-                {seller.isVerified && <BadgeCheck size={18} color={theme.purple} />}
+                {seller.isVerified && <BadgeCheck size={18} color={theme.primary} />}
             </View>
             {/* Optional Bio Text could go here */}
         </View>
@@ -164,7 +164,7 @@ export default function SellerProfileScreen() {
             <TouchableOpacity 
                 style={[
                     styles.followBtn, 
-                    { backgroundColor: isFollowing ? theme.surface : theme.purple }
+                    { backgroundColor: isFollowing ? theme.surface : theme.primary, borderWidth: isFollowing ? 1 : 0, borderColor: '#F1F5F9' }
                 ]} 
                 onPress={handleFollowToggle}
                 disabled={currentUser?.id === seller.id}
@@ -185,12 +185,12 @@ export default function SellerProfileScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabBar, { borderBottomColor: theme.surface }]}>
-        <TouchableOpacity onPress={() => setActiveTab('grid')} style={[styles.tab, activeTab === 'grid' && { borderBottomColor: theme.text }]}>
-          <Grid size={24} color={activeTab === 'grid' ? theme.text : theme.secondaryText} />
+      <View style={[styles.tabBar, { borderBottomColor: '#F1F5F9' }]}>
+        <TouchableOpacity onPress={() => setActiveTab('grid')} style={[styles.tab, activeTab === 'grid' && { borderBottomColor: theme.primary }]}>
+          <Grid size={22} color={activeTab === 'grid' ? theme.primary : theme.mutedText} strokeWidth={activeTab === 'grid' ? 2 : 1.5} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('list')} style={[styles.tab, activeTab === 'list' && { borderBottomColor: theme.text }]}>
-          <List size={24} color={activeTab === 'list' ? theme.text : theme.secondaryText} />
+        <TouchableOpacity onPress={() => setActiveTab('list')} style={[styles.tab, activeTab === 'list' && { borderBottomColor: theme.primary }]}>
+          <List size={22} color={activeTab === 'list' ? theme.primary : theme.mutedText} strokeWidth={activeTab === 'list' ? 2 : 1.5} />
         </TouchableOpacity>
       </View>
     </View>
@@ -219,7 +219,7 @@ export default function SellerProfileScreen() {
           <Image source={{ uri: imageUrl }} style={styles.listImage} />
           <View style={styles.listInfo}>
             <Text numberOfLines={1} style={[styles.listTitle, { color: theme.text }]}>{item.title}</Text>
-            <Text style={[styles.listPrice, { color: theme.purple }]}>₦{item.price.toLocaleString()}</Text>
+            <Text style={[styles.listPrice, { color: theme.text }]}>₦{item.price.toLocaleString()}</Text>
           </View>
         </TouchableOpacity>
       );

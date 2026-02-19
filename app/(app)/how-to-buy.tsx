@@ -28,19 +28,19 @@ export default function HowToBuyScreen() {
       title: 'Find what you need',
       description: 'Browse categories or use the search bar to find textbooks, gadgets, and more.',
       icon: Search,
-      color: '#3498db'
+      color: theme.primary
     },
     {
       title: 'Check the details',
       description: 'Tap on a product to view images, price, and description. Check seller reviews.',
       icon: ShoppingBag,
-      color: '#9b59b6'
+      color: '#475569'
     },
     {
       title: 'Payment & Delivery',
-      description: 'Pay securely via the app and choose "Rider Delivery" or safe pickup.',
+      description: 'Pay securely via the app and have your items delivered straight to you by a UniMart Rider.',
       icon: CreditCard,
-      color: '#27ae60'
+      color: '#16A34A'
     }
   ];
 
@@ -49,11 +49,11 @@ export default function HowToBuyScreen() {
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Guide</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Buyer Guide</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -63,12 +63,12 @@ export default function HowToBuyScreen() {
       >
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={[styles.heroIconCircle, { backgroundColor: theme.surface }]}>
-            <ShoppingBag size={48} color={theme.purple} strokeWidth={1.5} />
+          <View style={[styles.heroIconCircle, { backgroundColor: theme.secondaryBackground }]}>
+            <ShoppingBag size={48} color={theme.primary} strokeWidth={1.5} />
           </View>
-          <Text style={[styles.heroTitle, { color: theme.text }]}>Shopping Made Easy</Text>
+          <Text style={[styles.heroTitle, { color: theme.text }]}>Shopping Guide</Text>
           <Text style={[styles.heroSubtitle, { color: theme.secondaryText }]}>
-            Get the items you need on campus in just a few simple steps.
+            Get the items you need nearby in just a few simple steps.
           </Text>
         </View>
 
@@ -85,7 +85,7 @@ export default function HowToBuyScreen() {
                   <View style={[styles.timelineDot, { backgroundColor: step.color }]}>
                     <Icon size={16} color="white" />
                   </View>
-                  {!isLast && <View style={[styles.timelineLine, { backgroundColor: theme.surface }]} />}
+                  {!isLast && <View style={[styles.timelineLine, { backgroundColor: theme.secondaryBackground }]} />}
                 </View>
 
                 {/* Content Column */}
@@ -103,10 +103,10 @@ export default function HowToBuyScreen() {
       </ScrollView>
 
       {/* Footer CTA */}
-      <View style={[styles.footer, { backgroundColor: theme.background, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: theme.surface, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity 
-          style={[styles.ctaButton, { backgroundColor: theme.purple }]} 
-          activeOpacity={0.8}
+          style={[styles.ctaButton, { backgroundColor: theme.primary }]} 
+          activeOpacity={0.9}
           onPress={() => router.navigate('/(app)/(tabs)/shop')}
         >
           <Text style={styles.ctaButtonText}>Start Shopping</Text>

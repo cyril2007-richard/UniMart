@@ -18,13 +18,11 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function SignupScreen() {
   const [formData, setFormData] = useState({
-    email: '',
     name: '',
     username: '',
-    password: '',
-    matricNumber: '',
-    faculty: '',
     phoneNumber: '',
+    password: '',
+    confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -37,37 +35,40 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     if (loading) return;
-    setLoading(true);
+    
     if (
-      !formData.email ||
       !formData.name ||
       !formData.username ||
+      !formData.phoneNumber ||
       !formData.password ||
-      !formData.matricNumber ||
-      !formData.faculty ||
-      !formData.phoneNumber
+      !formData.confirmPassword
     ) {
       Alert.alert('Error', 'Please fill in all fields');
-      setLoading(false);
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
+
     try {
+      // Generate placeholder email for Firebase Auth
+      const placeholderEmail = `${formData.username.toLowerCase()}@unimart.com`;
+      
       const success = await signup({
-        ...formData,
+        name: formData.name,
+        username: formData.username,
+        phoneNumber: formData.phoneNumber,
+        password: formData.password,
+        email: placeholderEmail,
         profilePicture: 'https://randomuser.me/api/portraits/lego/1.jpg',
       });
 
@@ -76,7 +77,7 @@ export default function SignupScreen() {
           { text: 'OK', onPress: () => router.replace('/(app)/(tabs)') },
         ]);
       } else {
-        Alert.alert('Error', 'Email or username already exists');
+        Alert.alert('Error', 'Username already exists');
       }
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
@@ -105,81 +106,47 @@ export default function SignupScreen() {
 
         {/* Form Section */}
         <View style={styles.formContainer}>
-          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-            <User size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+            <User size={20} color={theme.mutedText} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: theme.text }]}
               placeholder="Full Name"
-              placeholderTextColor={theme.tabIconDefault}
+              placeholderTextColor={theme.mutedText}
               value={formData.name}
               onChangeText={(text) => updateFormData('name', text)}
             />
           </View>
 
-          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-            <UserCircle size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+            <UserCircle size={20} color={theme.mutedText} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: theme.text }]}
               placeholder="Username"
-              placeholderTextColor={theme.tabIconDefault}
+              placeholderTextColor={theme.mutedText}
               value={formData.username}
               onChangeText={(text) => updateFormData('username', text)}
               autoCapitalize="none"
             />
           </View>
 
-          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-            <Mail size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: theme.text }]}
-              placeholder="Email Address"
-              placeholderTextColor={theme.tabIconDefault}
-              value={formData.email}
-              onChangeText={(text) => updateFormData('email', text)}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-          </View>
-
-          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-            <Phone size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+            <Phone size={20} color={theme.mutedText} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: theme.text }]}
               placeholder="Phone Number"
-              placeholderTextColor={theme.tabIconDefault}
+              placeholderTextColor={theme.mutedText}
               value={formData.phoneNumber}
               onChangeText={(text) => updateFormData('phoneNumber', text)}
               keyboardType="phone-pad"
             />
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.inputWrapper, styles.halfInput, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-              <TextInput
-                style={[styles.input, { color: theme.text }]}
-                placeholder="Matric No."
-                placeholderTextColor={theme.tabIconDefault}
-                value={formData.matricNumber}
-                onChangeText={(text) => updateFormData('matricNumber', text)}
-              />
-            </View>
-            <View style={[styles.inputWrapper, styles.halfInput, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-              <TextInput
-                style={[styles.input, { color: theme.text }]}
-                placeholder="Faculty"
-                placeholderTextColor={theme.tabIconDefault}
-                value={formData.faculty}
-                onChangeText={(text) => updateFormData('faculty', text)}
-              />
-            </View>
-          </View>
-
-          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-            <Lock size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+            <Lock size={20} color={theme.mutedText} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: theme.text }]}
               placeholder="Password"
-              placeholderTextColor={theme.tabIconDefault}
+              placeholderTextColor={theme.mutedText}
               value={formData.password}
               onChangeText={(text) => updateFormData('password', text)}
               secureTextEntry
@@ -187,11 +154,24 @@ export default function SignupScreen() {
             />
           </View>
 
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+            <Lock size={20} color={theme.mutedText} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Confirm Password"
+              placeholderTextColor={theme.mutedText}
+              value={formData.confirmPassword}
+              onChangeText={(text) => updateFormData('confirmPassword', text)}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </View>
+
           <TouchableOpacity
-            style={[styles.signUpButton, { backgroundColor: theme.purple }, loading && styles.disabledButton]}
+            style={[styles.signUpButton, { backgroundColor: theme.primary }, loading && styles.disabledButton]}
             onPress={handleSignup}
             disabled={loading}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             {loading ? (
               <ActivityIndicator color="white" />
@@ -205,7 +185,7 @@ export default function SignupScreen() {
         <View style={styles.footerContainer}>
           <Text style={[styles.footerText, { color: theme.secondaryText }]}>Already have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text style={[styles.loginText, { color: theme.purple }]}>Sign In</Text>
+            <Text style={[styles.loginText, { color: theme.primary }]}>Sign In</Text>
           </TouchableOpacity>
         </View>
         <View style={{ height: 20 }} />

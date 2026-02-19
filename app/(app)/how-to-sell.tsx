@@ -29,19 +29,19 @@ export default function HowToSellScreen() {
       title: 'Get Verified',
       description: 'Ensure your profile is verified. This builds trust and increases your visibility to buyers.',
       icon: ShieldCheck,
-      color: '#27ae60' // Green
+      color: '#16A34A' // Success Green
     },
     {
       title: 'Create a Listing',
       description: 'Tap the "+" button. Upload clear photos and set a fair price for your item.',
       icon: PackagePlus,
-      color: '#8e44ad' // Purple
+      color: theme.primary // Primary Blue
     },
     {
       title: 'Add Details',
       description: 'Write a clear description including condition, specs, and any defects.',
       icon: Camera,
-      color: '#e67e22' // Orange
+      color: '#F59E0B' // Warning Orange
     }
   ];
 
@@ -50,7 +50,7 @@ export default function HowToSellScreen() {
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={24} color={theme.text} />
         </TouchableOpacity>
@@ -64,12 +64,12 @@ export default function HowToSellScreen() {
       >
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={[styles.heroIconCircle, { backgroundColor: theme.surface }]}>
-            <BadgeCheck size={48} color={theme.purple} strokeWidth={1.5} />
+          <View style={[styles.heroIconCircle, { backgroundColor: theme.secondaryBackground }]}>
+            <BadgeCheck size={48} color={theme.primary} strokeWidth={1.5} />
           </View>
-          <Text style={[styles.heroTitle, { color: theme.text }]}>Turn Clutter into Cash</Text>
+          <Text style={[styles.heroTitle, { color: theme.text }]}>Start Selling</Text>
           <Text style={[styles.heroSubtitle, { color: theme.secondaryText }]}>
-            Selling on UniMart is simple. Follow these steps to get your items listed today.
+            Post your items on UniMart and reach thousands of people instantly.
           </Text>
         </View>
 
@@ -86,7 +86,7 @@ export default function HowToSellScreen() {
                   <View style={[styles.timelineDot, { backgroundColor: step.color }]}>
                     <Icon size={16} color="white" />
                   </View>
-                  {!isLast && <View style={[styles.timelineLine, { backgroundColor: theme.surface }]} />}
+                  {!isLast && <View style={[styles.timelineLine, { backgroundColor: theme.secondaryBackground }]} />}
                 </View>
 
                 {/* Content Column */}
@@ -104,11 +104,10 @@ export default function HowToSellScreen() {
       </ScrollView>
 
       {/* Footer CTA */}
-      <View style={[styles.footer, { backgroundColor: theme.background, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: theme.surface, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity 
-          style={[styles.ctaButton, { backgroundColor: theme.purple }]} 
-          activeOpacity={0.8}
-          // Assuming you have an 'add' route or tab. Adjust as needed.
+          style={[styles.ctaButton, { backgroundColor: theme.primary }]} 
+          activeOpacity={0.9}
           onPress={() => router.navigate('/(app)/add')} 
         >
           <Text style={styles.ctaButtonText}>List an Item</Text>

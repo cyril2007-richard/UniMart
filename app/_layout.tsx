@@ -20,23 +20,13 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const [loaded, error] = [true, null]; // Skip custom font loading for system fonts
 
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
 
   return (
     <AuthProvider>

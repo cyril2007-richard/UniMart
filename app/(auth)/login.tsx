@@ -55,10 +55,10 @@ export default function LoginScreen() {
         >
           {/* Header Section */}
           <View style={styles.headerContainer}>
-            <View style={[styles.iconContainer, { backgroundColor: theme.lightPurple }]}>
-                <User size={40} color={theme.purple} strokeWidth={1.5} />
+            <View style={[styles.iconContainer, { backgroundColor: theme.secondaryBackground }]}>
+                <User size={40} color={theme.primary} strokeWidth={1.5} />
             </View>
-            <Text style={[styles.welcomeText, { color: theme.text }]}>Welcome Back!</Text>
+            <Text style={[styles.welcomeText, { color: theme.text }]}>Welcome Back</Text>
             <Text style={[styles.subtitleText, { color: theme.secondaryText }]}>
               Sign in to continue to UniMart
             </Text>
@@ -66,24 +66,24 @@ export default function LoginScreen() {
 
           {/* Form Section */}
           <View style={styles.formContainer}>
-            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-              <Mail size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+              <Mail size={20} color={theme.mutedText} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 placeholder="Email or Username"
-                placeholderTextColor={theme.tabIconDefault}
+                placeholderTextColor={theme.mutedText}
                 value={usernameOrEmail}
                 onChangeText={setUsernameOrEmail}
                 autoCapitalize="none"
               />
             </View>
 
-            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.surface }]}>
-              <Lock size={20} color={theme.tabIconDefault} style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: '#F1F5F9' }]}>
+              <Lock size={20} color={theme.mutedText} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 placeholder="Password"
-                placeholderTextColor={theme.tabIconDefault}
+                placeholderTextColor={theme.mutedText}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -91,35 +91,35 @@ export default function LoginScreen() {
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 {showPassword ? (
-                  <EyeOff size={20} color={theme.tabIconDefault} />
+                  <EyeOff size={20} color={theme.mutedText} />
                 ) : (
-                  <Eye size={20} color={theme.tabIconDefault} />
+                  <Eye size={20} color={theme.mutedText} />
                 )}
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={[styles.forgotPasswordText, { color: theme.purple }]}>Forgot Password?</Text>
+              <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.signInButton, { backgroundColor: theme.purple }]}
+              style={[styles.signInButton, { backgroundColor: theme.primary }]}
               onPress={handleLogin}
-              activeOpacity={0.8}
+              activeOpacity={0.9}
             >
               <Text style={styles.signInButtonText}>Sign In</Text>
             </TouchableOpacity>
 
             {/* Divider */}
             <View style={styles.dividerContainer}>
-              <View style={[styles.dividerLine, { backgroundColor: theme.surface }]} />
-              <Text style={[styles.dividerText, { color: theme.secondaryText }]}>OR</Text>
-              <View style={[styles.dividerLine, { backgroundColor: theme.surface }]} />
+              <View style={[styles.dividerLine, { backgroundColor: '#F1F5F9' }]} />
+              <Text style={[styles.dividerText, { color: theme.mutedText }]}>OR</Text>
+              <View style={[styles.dividerLine, { backgroundColor: '#F1F5F9' }]} />
             </View>
 
             {/* Social Login */}
             <TouchableOpacity
-              style={[styles.googleButton, { borderColor: theme.surface, backgroundColor: theme.background }]}
+              style={[styles.googleButton, { borderColor: '#F1F5F9', backgroundColor: theme.surface }]}
               activeOpacity={0.7}
             >
               <Image 
@@ -145,7 +145,7 @@ export default function LoginScreen() {
           <View style={styles.footerContainer}>
             <Text style={[styles.footerText, { color: theme.secondaryText }]}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/signup')}>
-              <Text style={[styles.signupText, { color: theme.purple }]}>Sign Up</Text>
+              <Text style={[styles.signupText, { color: theme.primary }]}>Sign Up</Text>
             </TouchableOpacity>
           </View>
 
@@ -153,16 +153,16 @@ export default function LoginScreen() {
             style={styles.skipButton} 
             onPress={() => router.replace('/(app)/(tabs)')}
           >
-            <Text style={[styles.skipText, { color: theme.secondaryText }]}>Continue as Guest</Text>
+            <Text style={[styles.skipText, { color: theme.mutedText }]}>Continue as Guest</Text>
           </TouchableOpacity>
 
           <View style={styles.helpLinks}>
             <TouchableOpacity onPress={() => router.push('/how-to-buy')}>
-              <Text style={[styles.helpLinkText, { color: theme.purple }]}>How to Buy</Text>
+              <Text style={[styles.helpLinkText, { color: theme.primary }]}>How to Buy</Text>
             </TouchableOpacity>
-            <View style={[styles.helpDivider, { backgroundColor: theme.secondaryText }]} />
+            <View style={[styles.helpDivider, { backgroundColor: '#F1F5F9' }]} />
             <TouchableOpacity onPress={() => router.push('/how-to-sell')}>
-              <Text style={[styles.helpLinkText, { color: theme.purple }]}>How to Sell</Text>
+              <Text style={[styles.helpLinkText, { color: theme.primary }]}>How to Sell</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

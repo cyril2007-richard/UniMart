@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -15,20 +15,22 @@ type User = {
   id: string;
   name: string;
   username: string;
-  email: string;
+  email?: string;
   profilePicture: string;
-  matricNumber: string;
-  faculty: string;
+  matricNumber?: string;
+  faculty?: string;
   phoneNumber: string;
   followers: number;
   following: number;
   isVerified: boolean;
+  favorites?: string[];
 };
 
 // --- FIX: Create a simpler, more accurate type for new user data ---
 // This includes all User fields except the auto-generated ones, plus password
 type SignUpData = Omit<User, 'id' | 'followers' | 'following' | 'isVerified'> & {
   password?: string; // Password is required for signup
+  email: string; // Keep email as required for the signup function internally
 };
 // --- End of FIX ---
 
@@ -40,6 +42,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   updateProfile: (userId: string, username: string, profilePictureUri?: string) => Promise<boolean>;
   setVerified: (userId: string, isVerified: boolean) => Promise<boolean>;
+  toggleFavorite: (productId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,17 +78,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // If input is not an email, assume it's a username and find the email
       if (!usernameOrEmail.includes('@')) {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', usernameOrEmail));
-        const querySnapshot = await getDocs(q);
+        try {
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('username', '==', usernameOrEmail));
+          const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            console.error('Username not found');
+          if (querySnapshot.empty) {
+              console.error('Username not found');
+              return false;
+          }
+          
+          email = querySnapshot.docs[0].data().email;
+        } catch (queryError: any) {
+          if (queryError.code === 'permission-denied') {
+            console.error('Permission denied searching for username. Use email instead.');
+            // Fallback: If they entered a username but we can't query, 
+            // we can't do much unless we have a specific 'usernames' mapping collection.
             return false;
+          }
+          throw queryError;
         }
-        
-        // Assuming usernames are unique, take the first match
-        email = querySnapshot.docs[0].data().email;
       }
 
       await signInWithEmailAndPassword(auth, email, password); 
@@ -122,12 +134,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         username: newUser.username,
         email: newUser.email,
         profilePicture: newUser.profilePicture,
-        matricNumber: newUser.matricNumber,
-        faculty: newUser.faculty,
+        matricNumber: newUser.matricNumber || '',
+        faculty: newUser.faculty || '',
         phoneNumber: newUser.phoneNumber,
         followers: 0,
         following: 0,
         isVerified: false,
+        favorites: [],
       };
 
       await setDoc(doc(db, 'users', firebaseUser.uid), userToAdd); // <-- FIX: Use imported setDoc and doc
@@ -136,6 +149,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Signup error:', error);
       return false;
+    }
+  };
+
+  const toggleFavorite = async (productId: string) => {
+    if (!currentUser) return;
+
+    const isFavorited = currentUser.favorites?.includes(productId);
+    const userDocRef = doc(db, 'users', currentUser.id);
+
+    try {
+      if (isFavorited) {
+        await updateDoc(userDocRef, {
+          favorites: arrayRemove(productId)
+        });
+        setCurrentUser(prev => prev ? {
+          ...prev,
+          favorites: prev.favorites?.filter(id => id !== productId)
+        } : null);
+      } else {
+        await updateDoc(userDocRef, {
+          favorites: arrayUnion(productId)
+        });
+        setCurrentUser(prev => prev ? {
+          ...prev,
+          favorites: [...(prev.favorites || []), productId]
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -199,7 +241,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, login, signup, logout, updateProfile, setVerified }}>
+    <AuthContext.Provider value={{ currentUser, loading, login, signup, logout, updateProfile, setVerified, toggleFavorite }}>
       {!loading && children}
     </AuthContext.Provider>
   );

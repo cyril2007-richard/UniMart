@@ -4,14 +4,19 @@ import {
   MapPin,
   Search,
   ShoppingCart,
+  Bike,
+  ChevronRight,
+  Star
 } from 'lucide-react-native';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Dimensions,
   Image,
   ImageBackground,
+  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -20,8 +25,12 @@ import {
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../../../firebase';
+import { useAuth } from '../../../contexts/AuthContext';
 import Colors from '../../../constants/Colors';
 import { useListings } from '../../../contexts/ListingsContext';
+import { useCategories } from '../../../contexts/CategoryContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CAROUSEL_MARGIN = 20;
@@ -31,34 +40,45 @@ export default function HomeScreen() {
   const theme = Colors.light;
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { currentUser } = useAuth();
   const carouselRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedSponsor, setSelectedSponsor] = useState<any>(null);
+  const [activeDispatches, setActiveDispatches] = useState<any[]>([]);
   
-  const { listings } = useListings();
-  const recentListings = listings.slice(0, 5);
+  const { listings, loading, refreshListings } = useListings();
+  const { categories } = useCategories();
+  const recentListings = listings.slice(0, 6);
+
+  const onRefresh = useCallback(async () => {
+    await refreshListings();
+  }, [refreshListings]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const q = query(
+      collection(db, 'receipts'),
+      where('buyerId', '==', currentUser.id),
+      where('status', 'in', ['rider_assigned', 'in_transit', 'picked_up'])
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setActiveDispatches(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
 
   const sponsors = [
     {
       id: 1,
-      title: 'Campus Essentials',
-      description: 'Up to 50% off textbooks & stationery',
-      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop',
-      color: theme.purple
-    },
-    {
-      id: 2,
-      title: 'Tech Gadgets',
-      description: 'Laptops, tablets & accessories',
-      image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop',
-      color: theme.gold
-    },
-    {
-      id: 3,
-      title: 'Fashion Week',
-      description: 'Trending styles for students',
-      image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop',
-      color: theme.purple
-    },
+      title: 'LIALD Luxe Autohaus',
+      description: 'Premium Automobiles - Buy | Sell | Upgrade',
+      image: require('../../../assets/images/banner.jpeg'),
+      fullImage: require('../../../assets/images/full image.jpeg'),
+      color: theme.primary
+    }
   ];
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -72,28 +92,50 @@ export default function HomeScreen() {
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 8 }]}>
         <View>
-            <Text style={[styles.appName, { color: theme.text }]}>UniMart</Text>
-            <View style={styles.locationRow}>
-                <MapPin size={12} color={theme.secondaryText} />
-                <Text style={[styles.locationText, { color: theme.secondaryText }]}>University of Benin</Text>
-            </View>
+          <Text style={[styles.appName, { color: theme.text }]}>UniMart</Text>
+          <View style={styles.locationRow}>
+            <MapPin size={12} color={theme.mutedText} />
+            <Text style={[styles.locationText, { color: theme.mutedText }]}>Local Community</Text>
+          </View>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/announcement')}>
-            <Bell color={theme.text} size={24} strokeWidth={1.5} />
-            <View style={styles.notificationDot} />
+            <Bell color={theme.text} size={22} strokeWidth={1.8} />
+            <View style={[styles.notificationDot, { backgroundColor: theme.error }]} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/cart')}>
-            <ShoppingCart color={theme.text} size={24} strokeWidth={1.5} />
+            <ShoppingCart color={theme.text} size={22} strokeWidth={1.8} />
           </TouchableOpacity>
         </View>
       </View>
 
+      {activeDispatches.length > 0 && (
+        <View style={styles.dispatchNotificationContainer}>
+          <TouchableOpacity 
+            style={[styles.dispatchNotification, { backgroundColor: theme.primary }]}
+            onPress={() => router.push('/receipts')}
+            activeOpacity={0.9}
+          >
+            <View style={styles.dispatchIconContainer}>
+              <Bike size={18} color="white" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dispatchTitle}>Live Delivery Progress</Text>
+              <Text style={styles.dispatchSub}>#{activeDispatches[0].id.slice(0, 8).toUpperCase()} is {activeDispatches[0].status.replace('_', ' ')}</Text>
+            </View>
+            <ChevronRight size={16} color="rgba(255,255,255,0.7)" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       <ScrollView 
         contentContainerStyle={styles.scrollContainer} 
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={theme.primary} />
+        }
       >
         {/* Search Bar */}
         <View style={styles.searchSection}>
@@ -102,8 +144,8 @@ export default function HomeScreen() {
             style={[styles.searchBar, { backgroundColor: theme.surface }]}
             activeOpacity={0.9}
           >
-            <Search color={theme.purple} size={20} strokeWidth={2} />
-            <Text style={[styles.searchInput, { color: theme.secondaryText }]}>What are you looking for?</Text>
+            <Search color={theme.mutedText} size={20} strokeWidth={2} />
+            <Text style={[styles.searchInput, { color: theme.mutedText }]}>Search for products...</Text>
           </TouchableOpacity>
         </View>
 
@@ -122,26 +164,27 @@ export default function HomeScreen() {
           >
             {sponsors.map((sponsor) => (
               <View key={sponsor.id} style={{ width: SCREEN_WIDTH, alignItems: 'center' }}>
-                  <TouchableOpacity
-                    style={styles.carouselItem}
-                    activeOpacity={0.9}
+                <TouchableOpacity
+                  style={styles.carouselItem}
+                  activeOpacity={0.9}
+                  onPress={() => setSelectedSponsor(sponsor)}
+                >
+                  <ImageBackground 
+                    source={sponsor.image} 
+                    style={styles.carouselBg}
+                    imageStyle={{ borderRadius: 14 }}
                   >
-                    <ImageBackground 
-                        source={{ uri: sponsor.image }} 
-                        style={styles.carouselBg}
-                        imageStyle={{ borderRadius: 20 }}
-                    >
-                        <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
-                            <View style={styles.carouselContent}>
-                                <View style={[styles.tag, { backgroundColor: sponsor.color }]}>
-                                    <Text style={styles.tagText}>Featured</Text>
-                                </View>
-                                <Text style={styles.carouselTitle}>{sponsor.title}</Text>
-                                <Text style={styles.carouselDesc}>{sponsor.description}</Text>
-                            </View>
+                    <View style={[styles.overlay, { backgroundColor: 'rgba(15, 23, 42, 0.4)' }]}>
+                      <View style={styles.carouselContent}>
+                        <View style={[styles.tag, { backgroundColor: sponsor.color }]}>
+                          <Text style={styles.tagText}>Featured</Text>
                         </View>
-                    </ImageBackground>
-                  </TouchableOpacity>
+                        <Text style={styles.carouselTitle}>{sponsor.title}</Text>
+                        <Text style={styles.carouselDesc}>{sponsor.description}</Text>
+                      </View>
+                    </View>
+                  </ImageBackground>
+                </TouchableOpacity>
               </View>
             ))}
           </ScrollView>
@@ -154,8 +197,8 @@ export default function HomeScreen() {
                 style={[
                   styles.paginationDot,
                   {
-                    backgroundColor: activeIndex === index ? theme.purple : '#E0E0E0',
-                    width: activeIndex === index ? 24 : 8,
+                    backgroundColor: activeIndex === index ? theme.primary : '#E2E8F0',
+                    width: activeIndex === index ? 20 : 6,
                   }
                 ]}
               />
@@ -163,59 +206,119 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Fresh Finds (Real Data) */}
+        {/* Shop by Category (Amazon Style Grid)
         <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionHeaderTitle, { color: theme.text }]}>Fresh Finds</Text>
-                <TouchableOpacity onPress={() => router.push('/search')}>
-                    <Text style={[styles.seeAllText, { color: theme.purple }]}>See All</Text>
-                </TouchableOpacity>
-            </View>
-            
-            {recentListings.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingRight: 20 }}>
-                    {recentListings.map((item) => (
-                        <TouchableOpacity 
-                            key={item.id} 
-                            style={[styles.productCard, { backgroundColor: theme.background }]}
-                            onPress={() => router.push(`/product-detail?id=${item.id}`)}
-                        >
-                            <Image source={{ uri: item.images[0] }} style={styles.productImage} />
-                            <View style={styles.productInfo}>
-                                <Text numberOfLines={1} style={[styles.productTitle, { color: theme.text }]}>{item.title}</Text>
-                                <Text style={[styles.productPrice, { color: theme.purple }]}>₦{item.price.toLocaleString()}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            ) : (
-                <View style={[styles.emptyState, { backgroundColor: theme.surface }]}>
-                    <Text style={{ color: theme.secondaryText }}>No new products yet.</Text>
+          <Text style={[styles.sectionHeaderTitle, { color: theme.text, marginBottom: 16 }]}>Shop by Category</Text>
+          <View style={styles.categoryGrid}>
+            {categories.slice(0, 4).map((cat) => (
+              <TouchableOpacity 
+                key={cat.id} 
+                style={[styles.categoryCard, { backgroundColor: theme.surface }]}
+                onPress={() => router.push(`/search?category=${cat.id}`)}
+              >
+                <Text style={[styles.categoryName, { color: theme.text }]}>{cat.name}</Text>
+                <View style={styles.categoryImagePlaceholder}>
+                  <Image 
+                    source={{ uri: `https://api.dicebear.com/7.x/shapes/png?seed=${cat.id}&backgroundColor=EEF1F4` }} 
+                    style={styles.categoryImage} 
+                  />
                 </View>
-            )}
+                <Text style={[styles.shopNow, { color: theme.primary }]}>Shop now</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View> */}
+
+        {/* Fresh Finds (Amazon Style Grid) */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionHeaderTitle, { color: theme.text }]}>Fresh Finds for You</Text>
+            <TouchableOpacity onPress={() => router.push('/search')}>
+              <Text style={[styles.seeAllText, { color: theme.primary }]}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {recentListings.length > 0 ? (
+            <View style={styles.productGrid}>
+              {recentListings.map((item) => (
+                <TouchableOpacity 
+                  key={item.id} 
+                  style={[styles.amazonProductCard, { backgroundColor: theme.surface }]}
+                  onPress={() => router.push(`/product-detail?id=${item.id}`)}
+                >
+                  <View style={styles.amazonProductImageContainer}>
+                    <Image source={{ uri: item.images[0] }} style={styles.amazonProductImage} />
+                  </View>
+                  <View style={styles.amazonProductInfo}>
+                    <Text numberOfLines={2} style={[styles.amazonProductTitle, { color: theme.text }]}>{item.title}</Text>
+                    <View style={styles.amazonRatingRow}>
+                      <Star size={10} color="#F59E0B" fill="#F59E0B" />
+                      <Star size={10} color="#F59E0B" fill="#F59E0B" />
+                      <Star size={10} color="#F59E0B" fill="#F59E0B" />
+                      <Star size={10} color="#F59E0B" fill="#F59E0B" />
+                      <Text style={[styles.amazonRatingCount, { color: theme.mutedText }]}>120+</Text>
+                    </View>
+                    <View style={styles.amazonPriceRow}>
+                      <Text style={[styles.amazonPrice, { color: theme.text }]}>
+                        <Text style={styles.amazonCurrency}>₦</Text>
+                        {item.price.toLocaleString()}
+                      </Text>
+                    </View>
+                    <Text style={[styles.amazonDeliveryInfo, { color: theme.mutedText }]}>Fast delivery</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={[styles.emptyState, { backgroundColor: theme.surface }]}>
+              <Text style={{ color: theme.secondaryText }}>No new products yet.</Text>
+            </View>
+          )}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* Sponsor Modal */}
+      <Modal
+        visible={!!selectedSponsor}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedSponsor(null)}
+      >
+        <TouchableOpacity 
+          style={styles.modalBackdrop} 
+          activeOpacity={1} 
+          onPress={() => setSelectedSponsor(null)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+              <Image 
+                source={selectedSponsor?.fullImage} 
+                style={styles.fullSponsorImage} 
+                resizeMode="stretch"
+              />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  
-  // Header
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 16,
     backgroundColor: 'white',
   },
   appName: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '700',
     letterSpacing: -0.5,
   },
   locationRow: {
@@ -238,46 +341,42 @@ const styles = StyleSheet.create({
   },
   notificationDot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF4444',
+    top: 6,
+    right: 6,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     borderWidth: 1.5,
     borderColor: 'white',
   },
-
-  // Search
   searchSection: {
-    paddingHorizontal: 20,
-    marginVertical: 10,
+    paddingHorizontal: 24,
+    marginVertical: 16,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    height: 50,
+    height: 48,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
   },
   searchInput: {
-    fontSize: 15,
-    marginLeft: 12,
+    fontSize: 14,
+    marginLeft: 10,
     flex: 1,
+    fontWeight: '400',
   },
-
-  // Carousel
   scrollContainer: { paddingBottom: 20 },
-  carouselSection: { marginVertical: 10 },
+  carouselSection: { marginVertical: 8 },
   carouselItem: {
     width: CAROUSEL_ITEM_WIDTH,
     height: 180,
-    borderRadius: 20,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   carouselBg: {
@@ -286,19 +385,18 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    borderRadius: 20,
     justifyContent: 'flex-end',
-    padding: 16,
+    padding: 20,
   },
   carouselContent: {
-    gap: 4,
+    gap: 6,
   },
   tag: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   tagText: {
     color: 'white',
@@ -308,29 +406,27 @@ const styles = StyleSheet.create({
   },
   carouselTitle: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
   },
   carouselDesc: {
     color: 'rgba(255,255,255,0.9)',
-    fontSize: 13,
+    fontSize: 14,
   },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 12,
     gap: 6,
   },
   paginationDot: {
-    height: 6,
-    borderRadius: 3,
+    height: 5,
+    borderRadius: 2.5,
   },
-
-  // Sections
   sectionContainer: {
-    marginTop: 24,
-    paddingHorizontal: 20,
+    marginTop: 32,
+    paddingHorizontal: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -340,67 +436,180 @@ const styles = StyleSheet.create({
   },
   sectionHeaderTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
   },
-
-  // Quick Actions
-  quickActionGrid: {
+  categoryGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
-  quickActionCard: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 16,
-    alignItems: 'center',
-    gap: 8,
+  categoryCard: {
+    width: (SCREEN_WIDTH - 24 * 2 - 12) / 2,
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 1,
   },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  categoryName: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  categoryImagePlaceholder: {
+    height: 100,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  shopNow: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  productGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  amazonProductCard: {
+    width: (SCREEN_WIDTH - 24 * 2 - 16) / 2,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 1,
+    marginBottom: 8,
+  },
+  amazonProductImageContainer: {
+    height: 160,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  amazonProductImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  amazonProductInfo: {
+    padding: 12,
+  },
+  amazonProductTitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  amazonRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginBottom: 6,
+  },
+  amazonRatingCount: {
+    fontSize: 11,
+    marginLeft: 4,
+  },
+  amazonPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  amazonCurrency: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  amazonPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  amazonDeliveryInfo: {
+    fontSize: 11,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  emptyState: {
+    padding: 32,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  quickActionText: {
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // Product Cards
-  productCard: {
-    width: 150,
-    borderRadius: 12,
+  modalContainer: {
+    width: SCREEN_WIDTH * 0.85,
+    height: '75%',
+    backgroundColor: 'white',
+    borderRadius: 30,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
-  productImage: {
+  modalContent: {
+    flex: 1,
+  },
+  fullSponsorImage: {
     width: '100%',
-    height: 150,
-    backgroundColor: '#f0f0f0',
+    height: '100%',
   },
-  productInfo: {
-    padding: 10,
+  dispatchNotificationContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: 'white',
   },
-  productTitle: {
-    fontSize: 14,
+  dispatchNotification: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  dispatchIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dispatchTitle: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  dispatchSub: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
     fontWeight: '600',
-    marginBottom: 4,
+    textTransform: 'uppercase',
+    marginTop: 2,
   },
-  productPrice: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  emptyState: {
-      padding: 20,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-  }
 });

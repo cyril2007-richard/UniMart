@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "UNIMART",
+    "slug": "UNIMART",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -31,7 +31,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -39,8 +40,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a31ccbd3-bd49-4c51-b07c-4ef9931f29bf"
+        "projectId": "58ae3e5e-b02c-4cd2-be88-855829b88369"
       }
-    }
+    },
+    "owner": "cyril_404"
   }
 }

@@ -11,11 +11,11 @@ export default function FloatingAddButton() {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: theme.purple, shadowColor: theme.purple }]}
+        style={[styles.button, { backgroundColor: theme.primary }]}
         onPress={() => router.push('/(app)/add')}
-        activeOpacity={0.8}
+        activeOpacity={0.9}
       >
-        <Plus color="white" size={32} strokeWidth={2} />
+        <Plus color="white" size={30} strokeWidth={2.5} />
       </TouchableOpacity>
     </View>
   );
@@ -24,19 +24,20 @@ export default function FloatingAddButton() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 90, // Adjusted to sit above tab bar
-    right: 20,
+    bottom: 100, // Slightly higher
+    right: 24,
     zIndex: 100,
   },
   button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
 });

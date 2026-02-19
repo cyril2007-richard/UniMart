@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, addDoc, deleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 
@@ -7,6 +7,8 @@ interface Notification {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
+  read: boolean;
+  createdAt: any;
 }
 
 interface NotificationContextType {
@@ -24,44 +26,55 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (currentUser) {
-        setLoading(true);
-        const notificationDocRef = doc(db, 'notifications', currentUser.id);
-        const notificationDoc = await getDoc(notificationDocRef);
-        if (notificationDoc.exists()) {
-          setNotifications(notificationDoc.data().items || []);
-        } else {
-          setNotifications([]);
-        }
-        setLoading(false);
-      } else {
-        setNotifications([]);
-        setLoading(false);
-      }
-    };
+    if (!currentUser) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
 
-    fetchNotifications();
+    setLoading(true);
+    // Use the subcollection: users/{uid}/notifications
+    const notificationsRef = collection(db, 'users', currentUser.id, 'notifications');
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Notification[];
+      setNotifications(items);
+      setLoading(false);
+    }, (error) => {
+      console.error("Notification subscription error:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [currentUser]);
 
-  const updateNotificationsInFirestore = async (items: Notification[]) => {
-    if (currentUser) {
-      const notificationDocRef = doc(db, 'notifications', currentUser.id);
-      await setDoc(notificationDocRef, { items });
+  const addNotification = async (message: string, type: 'success' | 'error' | 'info') => {
+    if (!currentUser) return;
+    try {
+      const notificationsRef = collection(db, 'users', currentUser.id, 'notifications');
+      await addDoc(notificationsRef, {
+        message,
+        type,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error adding notification:", error);
     }
   };
 
-  const addNotification = async (message: string, type: 'success' | 'error' | 'info') => {
-    const newNotification = { id: Date.now().toString(), message, type };
-    const newNotifications = [newNotification, ...notifications];
-    setNotifications(newNotifications);
-    await updateNotificationsInFirestore(newNotifications);
-  };
-
   const removeNotification = async (id: string) => {
-    const newNotifications = notifications.filter((notification) => notification.id !== id);
-    setNotifications(newNotifications);
-    await updateNotificationsInFirestore(newNotifications);
+    if (!currentUser) return;
+    try {
+      const notifDocRef = doc(db, 'users', currentUser.id, 'notifications', id);
+      await deleteDoc(notifDocRef);
+    } catch (error) {
+      console.error("Error removing notification:", error);
+    }
   };
 
   return (

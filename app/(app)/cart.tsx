@@ -21,7 +21,7 @@ export default function CartScreen() {
   if (!currentUser) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={[styles.header, { paddingTop: insets.top }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
@@ -30,19 +30,19 @@ export default function CartScreen() {
         </View>
         
         <View style={styles.centerContent}>
-            <View style={[styles.iconCircle, { backgroundColor: theme.surface }]}>
-                <LogIn size={40} color={theme.purple} />
+            <View style={[styles.iconCircle, { backgroundColor: theme.secondaryBackground }]}>
+                <LogIn size={40} color={theme.primary} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>Log in to View Cart</Text>
             <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
                 Sign in to see your saved items and continue shopping.
             </Text>
             <TouchableOpacity 
-                style={[styles.primaryButton, { backgroundColor: theme.purple }]}
+                style={[styles.primaryButton, { backgroundColor: theme.primary }]}
                 onPress={() => router.push('/(auth)/login')}
-                activeOpacity={0.8}
+                activeOpacity={0.9}
             >
-                <Text style={styles.primaryButtonText}>Login / Sign Up</Text>
+                <Text style={styles.primaryButtonText}>Login or Sign Up</Text>
             </TouchableOpacity>
         </View>
       </View>
@@ -51,7 +51,7 @@ export default function CartScreen() {
 
   // --- Render Item ---
   const renderCartItem = ({ item }: { item: any }) => (
-    <View style={[styles.cartItem, { backgroundColor: theme.background, borderColor: theme.surface }]}>
+    <View style={[styles.cartItem, { backgroundColor: theme.surface, borderColor: theme.secondaryBackground }]}>
       
       {/* Checkbox */}
       <TouchableOpacity 
@@ -59,28 +59,28 @@ export default function CartScreen() {
         activeOpacity={0.7}
         style={[
             styles.checkbox, 
-            item.selected ? { backgroundColor: theme.purple, borderColor: theme.purple } : { borderColor: theme.secondaryText }
+            item.selected ? { backgroundColor: theme.primary, borderColor: theme.primary } : { borderColor: theme.secondaryBackground }
         ]}
       >
-        {item.selected && <Check size={14} color="white" strokeWidth={2} />}
+        {item.selected && <Check size={14} color="white" strokeWidth={2.5} />}
       </TouchableOpacity>
 
       {/* Image */}
-      <Image source={{ uri: item.image }} style={[styles.productImage, { backgroundColor: theme.surface }]} />
+      <Image source={{ uri: item.image }} style={[styles.productImage, { backgroundColor: theme.secondaryBackground }]} />
       
       {/* Details */}
       <View style={styles.itemDetails}>
         <View style={styles.itemHeader}>
             <Text style={[styles.productName, { color: theme.text }]} numberOfLines={2}>{item.name}</Text>
             <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.removeButton}>
-                <Trash2 size={18} color={theme.purple} />
+                <Trash2 size={18} color={theme.error} />
             </TouchableOpacity>
         </View>
         
-        <Text style={[styles.productPrice, { color: theme.purple }]}>₦{item.price.toLocaleString()}</Text>
+        <Text style={[styles.productPrice, { color: theme.text }]}>₦{item.price.toLocaleString()}</Text>
         
         <View style={styles.itemFooter}>
-            <View style={[styles.quantityControl, { backgroundColor: theme.surface }]}>
+            <View style={[styles.quantityControl, { backgroundColor: theme.secondaryBackground }]}>
                 <TouchableOpacity 
                     style={styles.qtyBtn} 
                     onPress={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
@@ -105,14 +105,14 @@ export default function CartScreen() {
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ChevronLeft size={28} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>My Cart</Text>
         {cartItems.length > 0 ? (
             <TouchableOpacity onPress={() => toggleAllSelection(!allSelected)}>
-                <Text style={[styles.actionText, { color: theme.purple }]}>
+                <Text style={[styles.actionText, { color: theme.primary }]}>
                     {allSelected ? 'Deselect' : 'Select All'}
                 </Text>
             </TouchableOpacity>
@@ -125,16 +125,16 @@ export default function CartScreen() {
       {cartItems.length === 0 ? (
         <View style={styles.centerContent}>
           <View style={[styles.iconCircle, { backgroundColor: theme.surface }]}>
-             <ShoppingBag size={48} color={theme.secondaryText} />
+             <ShoppingBag size={48} color={theme.mutedText} />
           </View>
           <Text style={[styles.emptyTitle, { color: theme.text }]}>Your Cart is Empty</Text>
           <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
             Looks like you haven't added anything yet.
           </Text>
           <TouchableOpacity 
-            style={[styles.primaryButton, { backgroundColor: theme.purple }]} 
+            style={[styles.primaryButton, { backgroundColor: theme.primary }]} 
             onPress={() => router.push('/(app)/(tabs)/shop')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <Text style={styles.primaryButtonText}>Start Shopping</Text>
           </TouchableOpacity>
@@ -151,14 +151,14 @@ export default function CartScreen() {
           />
           
           {/* Footer */}
-          <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: 'rgba(0,0,0,0.05)' }]}>
+          <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: '#F1F5F9' }]}>
             <View style={styles.totalRow}>
                 <View>
                     <Text style={[styles.totalLabel, { color: theme.secondaryText }]}>Total</Text>
                     <Text style={[styles.totalAmount, { color: theme.text }]}>₦{getCartTotal().toLocaleString()}</Text>
                 </View>
                 <View style={styles.selectedInfo}>
-                     <Text style={[styles.selectedText, { color: theme.secondaryText }]}>
+                     <Text style={[styles.selectedText, { color: theme.mutedText }]}>
                         {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
                      </Text>
                 </View>
@@ -167,15 +167,15 @@ export default function CartScreen() {
             <TouchableOpacity 
               style={[
                 styles.checkoutButton, 
-                { backgroundColor: selectedCount > 0 ? theme.purple : theme.surface }
+                { backgroundColor: selectedCount > 0 ? theme.primary : theme.secondaryBackground }
               ]}
               disabled={selectedCount === 0}
               onPress={() => router.push('/checkout')}
-              activeOpacity={0.8}
+              activeOpacity={0.9}
             >
               <Text style={[
                   styles.checkoutButtonText, 
-                  { color: selectedCount > 0 ? 'white' : theme.secondaryText }
+                  { color: selectedCount > 0 ? 'white' : theme.mutedText }
               ]}>
                 Checkout
               </Text>

@@ -42,7 +42,6 @@ export default function ProductScreen() {
   const { categoryId, subcategory, minPrice, maxPrice } = useLocalSearchParams();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('default');
 
   // --- Filter Logic ---
@@ -64,14 +63,8 @@ export default function ProductScreen() {
     });
   }, [filteredByCategory, minPrice, maxPrice]);
 
-  const filteredBySearch = useMemo(() => {
-    if (!searchQuery) return filteredByPrice;
-    const q = searchQuery.toLowerCase();
-    return filteredByPrice.filter((p) => p.title.toLowerCase().includes(q));
-  }, [filteredByPrice, searchQuery]);
-
   const sortedProducts = useMemo(() => {
-    const arr = [...filteredBySearch];
+    const arr = [...filteredByPrice];
     if (sortBy === 'price-low') {
       return arr.sort((a, b) => a.price - b.price);
     }
@@ -79,12 +72,12 @@ export default function ProductScreen() {
       return arr.sort((a, b) => b.price - a.price);
     }
     return arr;
-  }, [filteredBySearch, sortBy]);
+  }, [filteredByPrice, sortBy]);
 
   // --- Render Items ---
   const renderGridItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
-      style={[styles.gridItem, { backgroundColor: theme.background }]}
+      style={[styles.gridItem, { backgroundColor: theme.surface }]}
       onPress={() => router.push(`/(app)/product-detail?id=${item.id}`)}
       activeOpacity={0.8}
     >
@@ -93,7 +86,7 @@ export default function ProductScreen() {
         <Text numberOfLines={1} style={[styles.gridName, { color: theme.text }]}>
           {item.title}
         </Text>
-        <Text style={[styles.gridPrice, { color: theme.purple }]}>
+        <Text style={[styles.gridPrice, { color: theme.text }]}>
           ₦{item.price.toLocaleString()}
         </Text>
       </View>
@@ -102,7 +95,7 @@ export default function ProductScreen() {
 
   const renderListItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
-      style={[styles.listItem, { backgroundColor: theme.background, borderColor: theme.surface }]}
+      style={[styles.listItem, { backgroundColor: theme.surface, borderColor: theme.secondaryBackground }]}
       onPress={() => router.push(`/(app)/product-detail?id=${item.id}`)}
       activeOpacity={0.7}
     >
@@ -118,7 +111,7 @@ export default function ProductScreen() {
             </Text>
             )}
         </View>
-        <Text style={[styles.listPrice, { color: theme.purple }]}>
+        <Text style={[styles.listPrice, { color: theme.text }]}>
           ₦{item.price.toLocaleString()}
         </Text>
       </View>
@@ -130,7 +123,7 @@ export default function ProductScreen() {
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: theme.surface }]}>
         <View style={styles.headerTop}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                 <ArrowLeft size={24} color={theme.text} />
@@ -140,45 +133,26 @@ export default function ProductScreen() {
                 {subcategory ? String(subcategory) : categoryId ? String(categoryId) : 'Products'}
             </Text>
             
-            <View style={[styles.viewToggle, { backgroundColor: theme.surface }]}>
+            <View style={[styles.viewToggle, { backgroundColor: theme.secondaryBackground }]}>
                 <TouchableOpacity
-                    style={[styles.viewBtn, viewMode === 'grid' && { backgroundColor: theme.background, shadowColor: '#000', shadowOpacity: 0.1, elevation: 2 }]}
+                    style={[styles.viewBtn, viewMode === 'grid' && { backgroundColor: theme.surface, shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 }]}
                     onPress={() => setViewMode('grid')}
                 >
-                    <Grid size={18} color={viewMode === 'grid' ? theme.purple : theme.secondaryText} />
+                    <Grid size={18} color={viewMode === 'grid' ? theme.primary : theme.mutedText} strokeWidth={2} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.viewBtn, viewMode === 'list' && { backgroundColor: theme.background, shadowColor: '#000', shadowOpacity: 0.1, elevation: 2 }]}
+                    style={[styles.viewBtn, viewMode === 'list' && { backgroundColor: theme.surface, shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 }]}
                     onPress={() => setViewMode('list')}
                 >
-                    <List size={18} color={viewMode === 'list' ? theme.purple : theme.secondaryText} />
+                    <List size={18} color={viewMode === 'list' ? theme.primary : theme.mutedText} strokeWidth={2} />
                 </TouchableOpacity>
-            </View>
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-            <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
-                <Search size={20} color={theme.secondaryText} style={{ marginRight: 8 }} />
-                <TextInput
-                    style={[styles.searchInput, { color: theme.text }]}
-                    placeholder="Search in this category..."
-                    placeholderTextColor={theme.secondaryText}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                />
-                {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')}>
-                        <X size={18} color={theme.secondaryText} />
-                    </TouchableOpacity>
-                )}
             </View>
         </View>
       </View>
 
       {/* Results Header */}
       <View style={[styles.resultsHeader, { backgroundColor: theme.background }]}>
-         <Text style={[styles.resultCount, { color: theme.secondaryText }]}>
+         <Text style={[styles.resultCount, { color: theme.mutedText }]}>
             {sortedProducts.length} items found
          </Text>
       </View>
@@ -197,7 +171,7 @@ export default function ProductScreen() {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <PackageSearch size={64} color={theme.surface} />
+          <PackageSearch size={64} color={theme.secondaryBackground} />
           <Text style={[styles.emptyText, { color: theme.text }]}>No products found</Text>
           <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
             Try adjusting your search or filters.
@@ -207,7 +181,7 @@ export default function ProductScreen() {
 
       {/* Floating Filter Bar */}
       <View style={[styles.floatingBarContainer, { paddingBottom: insets.bottom + 20 }]}>
-        <View style={[styles.floatingBar, { backgroundColor: theme.text }]}>
+        <View style={[styles.floatingBar, { backgroundColor: '#0F172A' }]}>
             <TouchableOpacity 
                 style={styles.floatBtn}
                 onPress={() => {
@@ -217,11 +191,11 @@ export default function ProductScreen() {
                    });
                 }}
             >
-                <Filter size={18} color={theme.background} />
-                <Text style={[styles.floatBtnText, { color: theme.background }]}>Filter</Text>
+                <Filter size={18} color="white" />
+                <Text style={[styles.floatBtnText, { color: 'white' }]}>Filter</Text>
             </TouchableOpacity>
             
-            <View style={[styles.verticalDivider, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+            <View style={[styles.verticalDivider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
             
             <TouchableOpacity 
                 style={styles.floatBtn}
@@ -231,8 +205,8 @@ export default function ProductScreen() {
                     setSortBy(order[(idx + 1) % order.length]);
                 }}
             >
-                <SlidersHorizontal size={18} color={theme.background} />
-                <Text style={[styles.floatBtnText, { color: theme.background }]}>
+                <SlidersHorizontal size={18} color="white" />
+                <Text style={[styles.floatBtnText, { color: 'white' }]}>
                     {sortBy === 'default' ? 'Sort' : sortBy === 'price-low' ? 'Low to High' : 'High to Low'}
                 </Text>
             </TouchableOpacity>
@@ -286,7 +260,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 20,
+    height: 40,
     borderRadius: 12,
     paddingHorizontal: 12,
   },

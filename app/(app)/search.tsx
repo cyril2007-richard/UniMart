@@ -73,7 +73,7 @@ export default function SearchScreen() {
     
     return (
       <TouchableOpacity
-        style={[styles.resultCard, { backgroundColor: theme.background }]}
+        style={[styles.resultCard, { backgroundColor: theme.surface }]}
         onPress={() => router.push(`/product-detail?id=${item.id}`)}
         activeOpacity={0.7}
       >
@@ -88,13 +88,13 @@ export default function SearchScreen() {
                     {item.subcategory || 'General'}
                 </Text>
             </View>
-            <Text style={[styles.resultPrice, { color: theme.purple }]}>
+            <Text style={[styles.resultPrice, { color: theme.text }]}>
                 ₦{item.price.toLocaleString()}
             </Text>
         </View>
         
         <View style={styles.chevronContainer}>
-            <ChevronRight size={20} color={theme.tabIconDefault} />
+            <ChevronRight size={18} color={theme.mutedText} />
         </View>
       </TouchableOpacity>
     );

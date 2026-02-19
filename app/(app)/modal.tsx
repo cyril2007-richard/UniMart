@@ -35,39 +35,39 @@ export default function ModalScreen() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Filter Products</Text>
+      <View style={[styles.header, { backgroundColor: theme.surface }]}>
+        <Text style={styles.title}>Filter</Text>
         <TouchableOpacity onPress={() => router.back()}>
-            <Text style={{ color: theme.purple, fontSize: 16, fontWeight: '600' }}>Close</Text>
+            <Text style={{ color: theme.primary, fontSize: 16, fontWeight: '600' }}>Done</Text>
         </TouchableOpacity>
       </View>
       
-      <View style={styles.separator} lightColor={Colors.light.surface} />
+      <View style={[styles.separator, { backgroundColor: theme.secondaryBackground }]} />
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Price Range (₦)</Text>
-            <View style={styles.row}>
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Min</Text>
+      <ScrollView style={[styles.content, { backgroundColor: theme.background }]} contentContainerStyle={{ paddingBottom: 40 }}>
+        <View style={[styles.section, { backgroundColor: theme.background }]}>
+            <Text style={styles.sectionTitle}>Price Range</Text>
+            <View style={[styles.row, { backgroundColor: theme.background }]}>
+                <View style={[styles.inputGroup, { backgroundColor: theme.background }]}>
+                    <Text style={styles.label}>Min Price (₦)</Text>
                     <TextInput
-                        style={[styles.input, { borderColor: theme.surface, color: theme.text }]}
+                        style={[styles.input, { borderColor: theme.secondaryBackground, color: theme.text, backgroundColor: theme.surface }]}
                         placeholder="0"
-                        placeholderTextColor={theme.secondaryText}
+                        placeholderTextColor={theme.mutedText}
                         keyboardType="numeric"
                         value={minPrice}
                         onChangeText={setMinPrice}
                     />
                 </View>
                 <View style={styles.dash} />
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Max</Text>
+                <View style={[styles.inputGroup, { backgroundColor: theme.background }]}>
+                    <Text style={styles.label}>Max Price (₦)</Text>
                     <TextInput
-                        style={[styles.input, { borderColor: theme.surface, color: theme.text }]}
+                        style={[styles.input, { borderColor: theme.secondaryBackground, color: theme.text, backgroundColor: theme.surface }]}
                         placeholder="Any"
-                        placeholderTextColor={theme.secondaryText}
+                        placeholderTextColor={theme.mutedText}
                         keyboardType="numeric"
                         value={maxPrice}
                         onChangeText={setMaxPrice}
@@ -77,15 +77,15 @@ export default function ModalScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.secondaryBackground }]}>
         <TouchableOpacity 
-            style={[styles.button, styles.resetButton, { borderColor: theme.surface }]} 
+            style={[styles.button, styles.resetButton, { borderColor: theme.secondaryBackground }]} 
             onPress={clearFilters}
         >
-            <Text style={[styles.buttonText, { color: theme.text }]}>Reset</Text>
+            <Text style={[styles.buttonText, { color: theme.secondaryText }]}>Clear</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-            style={[styles.button, styles.applyButton, { backgroundColor: theme.purple }]} 
+            style={[styles.button, styles.applyButton, { backgroundColor: theme.primary }]} 
             onPress={applyFilters}
         >
             <Text style={[styles.buttonText, { color: 'white' }]}>Apply Filters</Text>
