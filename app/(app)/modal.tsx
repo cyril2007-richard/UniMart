@@ -3,8 +3,8 @@ import { Platform, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-import { Text, View } from '@/components/Themed';
-import Colors from '@/constants/Colors';
+import { Text, View } from '../../components/Themed';
+import Colors from '../../constants/Colors';
 
 export default function ModalScreen() {
   const router = useRouter();

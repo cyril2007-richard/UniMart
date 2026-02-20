@@ -70,7 +70,7 @@ export default function ReceiptsScreen() {
       const fetchedReceipts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as any[];
       setReceipts(fetchedReceipts);
       
       // Filter active dispatches for the notification banner
