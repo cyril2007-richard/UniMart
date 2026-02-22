@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowRight, Bike, Check, ChevronLeft, Mail, ShieldCheck } from 'lucide-react-native';
+import { ArrowRight, Bike, Check, ChevronLeft, Zap, ShieldCheck } from 'lucide-react-native';
 import React from 'react';
 import {
   Linking,
@@ -18,8 +18,8 @@ export default function ApplyScreen() {
   const insets = useSafeAreaInsets();
   const theme = Colors.light;
 
-  const handleEmail = () => {
-    Linking.openURL('mailto:riders@unimart.com?subject=Rider Application&body=Name:%0AID Number:%0AIntroduction:');
+  const handleRiderSignup = () => {
+    Linking.openURL('https://get-verified.unimart.com.ng/rider/signup');
   };
 
   const requirements = [
@@ -106,10 +106,10 @@ export default function ApplyScreen() {
         <TouchableOpacity 
           style={[styles.applyButton, { backgroundColor: theme.primary }]} 
           activeOpacity={0.9}
-          onPress={handleEmail}
+          onPress={handleRiderSignup}
         >
-          <Mail color="white" size={20} />
-          <Text style={styles.applyButtonText}>Apply via Email</Text>
+          <Zap color="white" size={20} fill="white" />
+          <Text style={styles.applyButtonText}>Initialize Accreditation</Text>
           <ArrowRight color="white" size={20} />
         </TouchableOpacity>
       </View>

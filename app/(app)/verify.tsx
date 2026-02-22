@@ -28,9 +28,8 @@ export default function VerifyScreen() {
     
     setIsRedirecting(true);
     try {
-      // Point to our newly created web verification page
-      // During development, this is likely localhost:3001
-      const verificationUrl = `http://localhost:3001?uid=${currentUser.id}`;
+      // Point to our secure web verification portal
+      const verificationUrl = `https://get-verified.unimart.com.ng?uid=${currentUser.id}`;
       
       // Use openURL directly as supported check can be flaky on some dev environments
       await Linking.openURL(verificationUrl);
