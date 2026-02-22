@@ -414,6 +414,7 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={[styles.mapContainer, { borderColor: theme.surface }]}>
+            {/* MapView Disabled to prevent crash on Android without API Key
             {MapView ? (
               <MapView
                 style={styles.map}
@@ -436,6 +437,12 @@ export default function CheckoutScreen() {
                 <Text style={{ color: theme.secondaryText }}>Map not available</Text>
               </View>
             )}
+            */}
+            <View style={[styles.map, { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.surface }]}>
+                <MapPin size={40} color={theme.secondaryText} />
+                <Text style={{ color: theme.secondaryText, marginTop: 10 }}>Map View Temporarily Disabled</Text>
+                <Text style={{ color: theme.mutedText, fontSize: 12 }}>Configure Google Maps API Key to enable.</Text>
+            </View>
           </View>
 
           <View style={[styles.pickupNote, { backgroundColor: theme.secondaryBackground, marginTop: 12 }]}>
