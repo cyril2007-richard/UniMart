@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../../constants/Colors';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useListings } from '../../../contexts/ListingsContext';
+import { uploadImage } from '../../../lib/imageService';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
@@ -105,12 +106,19 @@ export default function ProfileScreen() {
     if (!currentUser) return;
     setIsSaving(true);
     try {
-      await updateProfile(currentUser.id, newUsername, newProfilePicture);
+      let finalProfileUrl = newProfilePicture;
+      
+      // If the profile picture is a local URI, upload to Cloudinary
+      if (newProfilePicture && newProfilePicture.startsWith('file://')) {
+        finalProfileUrl = await uploadImage(newProfilePicture);
+      }
+
+      await updateProfile(currentUser.id, newUsername, finalProfileUrl);
       Alert.alert('Success', 'Profile updated successfully!');
       setIsEditing(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update profile.');
+      Alert.alert('Error', error.message || 'Failed to update profile.');
     }
     setIsSaving(false);
   };

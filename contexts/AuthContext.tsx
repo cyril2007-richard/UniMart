@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadImage } from '../lib/imageService';
 
 type User = {
   id: string;
@@ -189,31 +189,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateProfile = async (userId: string, username: string, profilePictureUri?: string): Promise<boolean> => {
+  const updateProfile = async (userId: string, username: string, profilePictureUrl?: string): Promise<boolean> => {
     try {
       const userDocRef = doc(db, 'users', userId); // <-- FIX: Use imported doc
-      let updatedProfilePictureUrl = profilePictureUri;
-
-      if (profilePictureUri && profilePictureUri.startsWith('file://')) {
-        // Upload new profile picture to Firebase Storage
-        const response = await fetch(profilePictureUri);
-        const blob = await response.blob();
-        const storageRef = ref(getStorage(), `profilePictures/${userId}`);
-        const uploadTask = await uploadBytes(storageRef, blob);
-        updatedProfilePictureUrl = await getDownloadURL(uploadTask.ref);
+      
+      const updateData: any = { username };
+      if (profilePictureUrl) {
+        updateData.profilePicture = profilePictureUrl;
       }
 
-      await updateDoc(userDocRef, { // <-- FIX: Use imported updateDoc
-        username: username,
-        profilePicture: updatedProfilePictureUrl,
-      });
+      await updateDoc(userDocRef, updateData);
 
       // Update currentUser state
       if (currentUser && currentUser.id === userId) {
         setCurrentUser(prev => prev ? {
           ...prev,
           username: username,
-          profilePicture: updatedProfilePictureUrl || prev.profilePicture,
+          profilePicture: profilePictureUrl || prev.profilePicture,
         } : null);
       }
       return true;

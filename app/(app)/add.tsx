@@ -24,6 +24,7 @@ import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { Category, useCategories } from '../../contexts/CategoryContext';
 import { useListings } from '../../contexts/ListingsContext';
+import { uploadImage } from '../../lib/imageService';
 
 const { width } = Dimensions.get('window');
 const GAP = 12;
@@ -106,11 +107,17 @@ export default function AddScreen() {
     if (!isValid || !currentUser) return;
     setLoading(true);
     try {
+      // 1. Upload all local images to Cloudinary
+      // We do this in parallel for speed
+      const uploadPromises = images.map(uri => uploadImage(uri));
+      const cloudinaryUrls = await Promise.all(uploadPromises);
+
+      // 2. Add listing with Cloudinary URLs
       await addListing({
         title: title.trim(),
         price: parseFloat(price),
         description: description.trim(),
-        images,
+        images: cloudinaryUrls,
         userId: currentUser.id,
         sellerId: currentUser.id,
         category: category!.id,
@@ -120,9 +127,9 @@ export default function AddScreen() {
         { text: 'View Profile', onPress: () => router.push('/(app)/(tabs)/profile') },
         { text: 'Add Another', onPress: resetForm, style: 'cancel' },
       ]);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      Alert.alert('Error', 'There was an issue publishing your listing.');
+      Alert.alert('Upload Error', e.message || 'There was an issue publishing your listing.');
     } finally {
       setLoading(false);
     }
