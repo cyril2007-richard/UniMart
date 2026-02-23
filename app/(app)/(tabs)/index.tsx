@@ -31,6 +31,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Colors from '../../../constants/Colors';
 import { useListings } from '../../../contexts/ListingsContext';
 import { useCategories } from '../../../contexts/CategoryContext';
+import { categoryIcons } from '../../../constants/categoryIcons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CAROUSEL_MARGIN = 20;
@@ -206,28 +207,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Shop by Category (Amazon Style Grid)
-        <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeaderTitle, { color: theme.text, marginBottom: 16 }]}>Shop by Category</Text>
-          <View style={styles.categoryGrid}>
-            {categories.slice(0, 4).map((cat) => (
-              <TouchableOpacity 
-                key={cat.id} 
-                style={[styles.categoryCard, { backgroundColor: theme.surface }]}
-                onPress={() => router.push(`/search?category=${cat.id}`)}
-              >
-                <Text style={[styles.categoryName, { color: theme.text }]}>{cat.name}</Text>
-                <View style={styles.categoryImagePlaceholder}>
-                  <Image 
-                    source={{ uri: `https://api.dicebear.com/7.x/shapes/png?seed=${cat.id}&backgroundColor=EEF1F4` }} 
-                    style={styles.categoryImage} 
-                  />
-                </View>
-                <Text style={[styles.shopNow, { color: theme.primary }]}>Shop now</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View> */}
+     
 
         {/* Fresh Finds (Amazon Style Grid) */}
         <View style={styles.sectionContainer}>

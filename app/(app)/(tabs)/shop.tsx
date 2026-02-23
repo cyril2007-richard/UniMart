@@ -11,11 +11,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Image
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../../../constants/Colors";
 import { useCategories } from "../../../contexts/CategoryContext";
+import { subcategoryIcons } from "../../../constants/subcategoryIcons";
 
 const { width } = Dimensions.get('window');
 const SIDEBAR_WIDTH = width * 0.28;
@@ -79,7 +81,13 @@ export default function ShopScreen() {
       activeOpacity={0.7}
       onPress={() => router.push(`/product-screen?categoryId=${selectedCategory}&subcategory=${encodeURIComponent(item)}`)}
     >
-      <View style={[styles.iconContainer, { backgroundColor: '#fff', borderRadius: 0 }]} />
+      <View style={[styles.iconContainer, { backgroundColor: '#F8F9FA' }]}>
+        <Image 
+          source={subcategoryIcons[item] || { uri: 'https://via.placeholder.com/64' }} 
+          style={styles.subcategoryIcon}
+          resizeMode="contain"
+        />
+      </View>
       <Text numberOfLines={2} style={[styles.gridText, { color: theme.text }]}>{item}</Text>
     </TouchableOpacity>
   );
@@ -224,10 +232,15 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 64,
     height: 64,
-    borderRadius: 20,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    overflow: 'hidden',
+  },
+  subcategoryIcon: {
+    width: '100%',
+    height: '100%',
   },
   gridText: { 
     fontSize: 12, 
